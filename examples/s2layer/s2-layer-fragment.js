@@ -18,37 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#define SHADER_NAME s2-layer-vertex-shader
+export default `\
+#define SHADER_NAME s2-layer-fragment-shader
 
-attribute vec3 positions;
-
-attribute vec3 instancePositions;
-attribute float instanceRadius;
-attribute vec4 instanceColors;
-attribute vec3 instancePickingColors;
-
-uniform float opacity;
-uniform float radius;
-uniform float radiusMinPixels;
-uniform float radiusMaxPixels;
-uniform float renderPickingBuffer;
+#ifdef GL_ES
+precision highp float;
+#endif
 
 varying vec4 vColor;
 
 void main(void) {
-  // Multiply out radius and clamp to limits
-  float radiusPixels = clamp(
-    project_scale(radius * instanceRadius),
-    radiusMinPixels, radiusMaxPixels
-  );
-
-  // Find the center of the point and add the current vertex
-  vec3 center = project_position(instancePositions);
-  vec3 vertex = positions * radiusPixels;
-  gl_Position = project_to_clipspace(vec4(center + vertex, 1.0));
-
-  // Apply opacity to instance color, or return instance picking color
-  vec4 color = vec4(instanceColors.rgb, instanceColors.a * opacity) / 255.;
-  vec4 pickingColor = vec4(instancePickingColors / 255., 1.);
-  vColor = mix(color, pickingColor, renderPickingBuffer);
-}
+  gl_FragColor = vColor;
+}`;

@@ -20,36 +20,24 @@
 
 import {Layer, assembleShaders} from 'deck.gl';
 import {GL, Model, Geometry} from 'luma.gl';
-import {readFileSync} from 'fs';
-import {join} from 'path';
-
-const DEFAULT_RADIUS = 30;
-const DEFAULT_COLOR = [255, 0, 255, 255];
-
-const defaultGetPosition = x => x.position;
-const defaultGetRadius = x => x.radius || DEFAULT_RADIUS;
-const defaultGetColor = x => x.color || DEFAULT_COLOR;
+// import {readFileSync} from 'fs';
+// import {join} from 'path';
 
 const defaultProps = {
-  getPosition: defaultGetPosition,
-  getRadius: defaultGetRadius,
-  getColor: defaultGetColor,
-  radius: 30,  //  point radius in meters
-  radiusMinPixels: 0, //  min point radius in pixels
-  radiusMaxPixels: Number.MAX_SAFE_INTEGER, // max point radius in pixels
+  getTopPosition: x => x.topPosition,
+  getBottomPosition: x => x.bottomPosition,
+  getLeftPosition: x => x.leftPosition,
+  getRightPosition: x => x.rightPosition,
+  getColor: x => x.color || [255, 0, 255, 255],
   drawOutline: false,
   strokeWidth: 1
 };
 
 export default class S2Layer extends Layer {
-  constructor(props) {
-    super(Object.assign({}, defaultProps, props));
-  }
-
   getShaders(id) {
     return {
-      vs: readFileSync(join(__dirname, './s2-layer-vertex.glsl'), 'utf8'),
-      fs: readFileSync(join(__dirname, './s2-layer-fragment.glsl'), 'utf8')
+      vs: require('./s2-layer-vertex').default,
+      fs: require('./s2-layer-fragment').default
     };
   }
 
@@ -61,18 +49,18 @@ export default class S2Layer extends Layer {
 
     const {attributeManager} = this.state;
     attributeManager.addInstanced({
-      instancePositions: {size: 3, update: this.calculateInstancePositions},
-      instanceRadius: {size: 1, update: this.calculateInstanceRadius},
+      instanceTopPositions: {size: 2, update: this.calculateInstanceTopPositions},
+      instanceBottomPositions: {size: 2, update: this.calculateInstanceBottomPositions},
+      instanceLeftPositions: {size: 2, update: this.calculateInstanceLeftPositions},
+      instanceRightPositions: {size: 2, update: this.calculateInstanceRightPositions},
       instanceColors: {size: 4, type: GL.UNSIGNED_BYTE, update: this.calculateInstanceColors}
     });
   }
 
   updateState(evt) {
-    super.updateState(evt);
     const {props, oldProps} = evt;
     if (props.drawOutline !== oldProps.drawOutline) {
-      this.state.model.geometry.drawMode =
-        props.drawOutline ? GL.LINE_LOOP : GL.TRIANGLE_FAN;
+      this.state.model.geometry.drawMode = props.drawOutline ? GL.LINE_LOOP : GL.TRIANGLE_FAN;
     }
   }
 
@@ -80,19 +68,12 @@ export default class S2Layer extends Layer {
     const {gl} = this.context;
     const lineWidth = this.screenToDevicePixels(this.props.strokeWidth);
     gl.lineWidth(lineWidth);
-    this.state.model.render(Object.assign({}, uniforms, {
-      radius: this.props.radius,
-      radiusMinPixels: this.props.radiusMinPixels,
-      radiusMaxPixels: this.props.radiusMaxPixels
-    }));
-    // Setting line width back to 1 is here to workaround a Google Chrome bug
-    // gl.clear() and gl.isEnabled() will return GL_INVALID_VALUE even with
-    // correct parameter
-    // This is not happening on Safari and Firefox
+    this.state.model.render(Object.assign({}, uniforms));
     gl.lineWidth(1.0);
   }
 
   _getModel(gl) {
+
     const NUM_SEGMENTS = 16;
     const positions = [];
     for (let i = 0; i < NUM_SEGMENTS; i++) {
@@ -102,8 +83,6 @@ export default class S2Layer extends Layer {
         0
       );
     }
-    /* eslint-disable */
-
 
     const shaders = assembleShaders(gl, this.getShaders());
 
@@ -114,7 +93,7 @@ export default class S2Layer extends Layer {
       fs: shaders.fs,
       geometry: new Geometry({
         drawMode: GL.TRIANGLE_FAN,
-        positions: new Float32Array(positions)
+        positions: new Float32Array([0, 1, 2, 3])
       }),
       isInstanced: true
     });
@@ -161,3 +140,4 @@ export default class S2Layer extends Layer {
 }
 
 S2Layer.layerName = 'ScatterplotLayer';
+S2Layer.defaultProps = defaultProps;

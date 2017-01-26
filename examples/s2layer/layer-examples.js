@@ -1,82 +1,7 @@
-import {
-  ChoroplethLayer,
-  ScatterplotLayer,
-  ArcLayer,
-  LineLayer,
-  ScreenGridLayer,
-
-  ScatterplotLayer64,
-  ArcLayer64,
-  ChoroplethLayer64,
-  ExtrudedChoroplethLayer64,
-  LineLayer64
-} from 'deck.gl';
+import {ChoroplethLayer, ScatterplotLayer} from 'deck.gl';
 
 import S2Layer from './s2-layer';
 import * as dataSamples from './data-samples';
-
-const ArcLayerExample = {
-  layer: ArcLayer,
-  props: {
-    id: 'arcLayer',
-    data: dataSamples.routes,
-    getSourcePosition: d => d.START,
-    getTargetPosition: d => d.END,
-    getSourceColor: d => [64, 255, 0],
-    getTargetColor: d => [0, 128, 200],
-    strokeWidth: 1,
-    pickable: true
-  }
-};
-
-const ChoroplethLayerContourExample = {
-  layer: ChoroplethLayer,
-  props: {
-    id: 'choroplethLayerContour',
-    data: dataSamples.choropleths,
-    getColor: f => [0, 80, 200],
-    opacity: 0.8,
-    drawContour: true
-  }
-};
-
-const ChoroplethLayerExample = {
-  layer: ChoroplethLayer,
-  props: {
-    id: 'choroplethLayerSolid',
-    data: dataSamples.choropleths,
-    getColor: f => [((f.properties.ZIP_CODE * 10) % 127) + 128, 0, 0],
-    opacity: 0.8,
-    pickable: true
-  }
-};
-
-const ScreenGridLayerExample = {
-  layer: ScreenGridLayer,
-  props: {
-    id: 'screenGridLayer',
-    data: dataSamples.points,
-    getPosition: d => d.COORDINATES,
-    unitWidth: 40,
-    unitHeight: 40,
-    minColor: [0, 0, 80, 0],
-    maxColor: [100, 255, 0, 128],
-    pickable: false
-  }
-};
-
-const LineLayerExample = {
-  layer: LineLayer,
-  props: {
-    id: 'lineLayer',
-    data: dataSamples.routes,
-    getSourcePosition: d => d.START,
-    getTargetPosition: d => d.END,
-    getColor: d => d.SERVICE === 'WEEKDAY' ? [255, 64, 0] : [255, 200, 0],
-    strokeWidth: 1,
-    pickable: true
-  }
-};
 
 const S2LayerExample = {
   layer: S2Layer,
@@ -110,7 +35,6 @@ const ScatterplotLayerExample = {
   }
 };
 
-
 const ScatterplotLayerMetersExample = {
   layer: ScatterplotLayer,
   props: {
@@ -126,26 +50,10 @@ const ScatterplotLayerMetersExample = {
   }
 };
 
-// 64 BIT LAYER EXAMPLES
-
-const ArcLayer64Example = {
-  layer: ArcLayer64,
+const ChoroplethLayerContourExample = {
+  layer: ChoroplethLayer,
   props: {
-    id: 'arcLayer64',
-    data: dataSamples.routes,
-    getSourcePosition: d => d.START,
-    getTargetPosition: d => d.END,
-    getSourceColor: d => [64, 255, 0],
-    getTargetColor: d => [0, 128, 200],
-    strokeWidth: 1,
-    pickable: true
-  }
-};
-
-const ChoroplethLayer64ContourExample = {
-  layer: ChoroplethLayer64,
-  props: {
-    id: 'choroplethLayer64Contour',
+    id: 'choroplethLayerContour',
     data: dataSamples.choropleths,
     getColor: f => [0, 80, 200],
     opacity: 0.8,
@@ -153,59 +61,14 @@ const ChoroplethLayer64ContourExample = {
   }
 };
 
-const ChoroplethLayer64SolidExample = {
-  layer: ChoroplethLayer64,
+const ChoroplethLayerExample = {
+  layer: ChoroplethLayer,
   props: {
-    id: 'choroplethLayer64Solid',
+    id: 'choroplethLayerSolid',
     data: dataSamples.choropleths,
     getColor: f => [((f.properties.ZIP_CODE * 10) % 127) + 128, 0, 0],
     opacity: 0.8,
     pickable: true
-  }
-};
-
-const ExtrudedChoroplethLayer64Example = {
-  layer: ExtrudedChoroplethLayer64,
-  props: {
-    id: 'extrudedChoroplethLayer64',
-    data: dataSamples.choropleths,
-    getColor: f => [((f.properties.ZIP_CODE * 10) % 127) + 128, 0, 0],
-    pointLightLocation: [
-      // props.mapViewState.longitude,
-      // props.mapViewState.latitude,
-      37.751537058389985,
-      -122.42694203247012,
-      1e4
-    ],
-    opacity: 1.0,
-    pickable: true
-  }
-};
-
-const LineLayer64Example = {
-  layer: LineLayer64,
-  props: {
-    id: 'lineLayer64',
-    data: dataSamples.routes,
-    getSourcePosition: d => d.START,
-    getTargetPosition: d => d.END,
-    getColor: d => d.SERVICE === 'WEEKDAY' ? [255, 64, 0] : [255, 200, 0],
-    strokeWidth: 1,
-    pickable: true
-  }
-};
-
-const ScatterplotLayer64Example = {
-  layer: ScatterplotLayer64,
-  props: {
-    id: 'scatterplotLayer64',
-    data: dataSamples.points,
-    getPosition: d => d.COORDINATES,
-    getColor: d => [255, 128, 0],
-    getRadius: d => d.SPACES,
-    pickable: true,
-    radiusMinPixels: 1,
-    radiusMaxPixels: 30
   }
 };
 
@@ -223,19 +86,6 @@ const ScatterplotLayerPerfExample = (id, getData) => ({
   }
 });
 
-const ScatterplotLayer64PerfExample = (id, getData) => ({
-  layer: ScatterplotLayer64,
-  getData,
-  props: {
-    id: `scatterplotLayer64Perf-${id}`,
-    getPosition: d => d,
-    getColor: d => [0, 128, 0],
-    // pickable: true,
-    radiusMinPixels: 1,
-    radiusMaxPixels: 5
-  }
-});
-
 export default {
   'S2 Layers': {
     S2Layer: S2LayerExample
@@ -245,27 +95,12 @@ export default {
     'ChoroplethLayer (Solid)': ChoroplethLayerExample,
     'ChoroplethLayer (Contour)': ChoroplethLayerContourExample,
     ScatterplotLayer: ScatterplotLayerExample,
-    'ScatterplotLayer (meters)': ScatterplotLayerMetersExample,
-    ArcLayer: ArcLayerExample,
-    LineLayer: LineLayerExample,
-    ScreenGridLayer: ScreenGridLayerExample
-  },
-
-  '64-bit Layers': {
-    ArcLayer64: ArcLayer64Example,
-    'ChoroplethLayer64 (Solid)': ChoroplethLayer64SolidExample,
-    'ChoroplethLayer64 (Contour)': ChoroplethLayer64ContourExample,
-    ExtrudedChoroplethLayer64: ExtrudedChoroplethLayer64Example,
-    ScatterplotLayer64: ScatterplotLayer64Example,
-    LineLayer64: LineLayer64Example
+    'ScatterplotLayer (meters)': ScatterplotLayerMetersExample
   },
 
   'Performance Tests': {
     'ScatterplotLayer 1M': ScatterplotLayerPerfExample('1M', dataSamples.getPoints1M),
-    'ScatterplotLayer 10M': ScatterplotLayerPerfExample('10M', dataSamples.getPoints10M),
-    'ScatterplotLayer64 100K': ScatterplotLayer64PerfExample('100K', dataSamples.getPoints100K),
-    'ScatterplotLayer64 1M': ScatterplotLayer64PerfExample('1M', dataSamples.getPoints1M),
-    'ScatterplotLayer64 10M': ScatterplotLayer64PerfExample('10M', dataSamples.getPoints10M)
+    'ScatterplotLayer 10M': ScatterplotLayerPerfExample('10M', dataSamples.getPoints10M)
   }
 };
 

@@ -30,6 +30,7 @@ module.exports = {
         // Mainly needed if your apps want to use JSX (or support old browsers)
         test: /\.js$/,
         loader: 'buble-loader',
+        include: [resolve('.')],
         exclude: [/node_modules/],
         options: {
           objectAssign: 'Object.assign', // May need polyfill on old browsers
@@ -48,6 +49,10 @@ module.exports = {
     ]
   },
 
+  node: {
+    fs: 'empty'
+  },
+
   // Optional: Enables reading mapbox token from environment variable
   plugins: [
     new webpack.EnvironmentPlugin(['MAPBOX_ACCESS_TOKEN', 'MapboxAccessToken'])
@@ -61,7 +66,7 @@ const LOCAL_DEVELOPMENT_CONFIG = {
   resolve: {
     alias: {
       // Imports the deck.gl library from the src directory in this repo
-      'deck.gl': resolve('../../src'),
+      // 'deck.gl': resolve('../../src'),
       // Important: ensure shared dependencies come from this app's node_modules
       'luma.gl': resolve('./node_modules/luma.gl'),
       react: resolve('./node_modules/react')
@@ -69,20 +74,20 @@ const LOCAL_DEVELOPMENT_CONFIG = {
   },
   module: {
     rules: [
-      {
-        // Needed to inline deck.gl GLSL shaders
-        include: [resolve('../../src'), resolve('.')],
-        loader: 'transform-loader',
-        options: 'brfs-babel'
-      }
+      // {
+      //   // Needed to inline deck.gl GLSL shaders
+      //   include: [resolve('../../src')],
+      //   loader: 'transform-loader',
+      //   options: 'brfs-babel'
+      // }
     ]
   }
 };
 
 Object.assign(module.exports.resolve.alias, LOCAL_DEVELOPMENT_CONFIG.resolve.alias);
-module.exports.module.rules =
-  module.exports.module.rules.concat(LOCAL_DEVELOPMENT_CONFIG.module.rules);
+module.exports.module.rules = [].concat(
+  LOCAL_DEVELOPMENT_CONFIG.module.rules,
+  module.exports.module.rules
+);
 
 // END DELETE THESE LINES WHEN RUNNING STANDALONE
-
-console.log(module.exports.module.rules);
