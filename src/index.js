@@ -46,8 +46,13 @@ export {default as ChoroplethLayer} from './layers/deprecated/choropleth-layer';
 export {default as ChoroplethLayer64} from './layers/deprecated/choropleth-layer-64';
 export {default as ExtrudedChoroplethLayer64} from './layers/deprecated/extruded-choropleth-layer-64';
 
+export {default as GraphLayer} from './layers/infovis/graph-layer';
+export {default as Plane} from './layers/infovis/plane';
+export {default as Axes} from './layers/infovis/axes';
+
 // React exports
 export {default as autobind} from './react/autobind';
+export {default as DeckGLOriginal} from './react/deckgl-original';
 export {default as DeckGL} from './react/deckgl';
 export {default as default} from './react/deckgl';
 

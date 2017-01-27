@@ -1,170 +1,277 @@
-// Copyright (c) 2015 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-import React, {PropTypes, createElement} from 'react';
-import autobind from './autobind';
-import WebGLRenderer from './webgl-renderer';
-import {LayerManager, Layer} from '../lib';
-import {EffectManager, Effect} from '../experimental';
-import {GL, addEvents} from 'luma.gl';
-// import {Viewport, WebMercatorViewport} from 'viewport-mercator-project';
-import {Viewport, WebMercatorViewport} from '../lib/viewports';
-import {log} from '../lib/utils';
+import React, {PropTypes} from 'react';
 
-function noop() {}
-
-const propTypes = {
-  id: PropTypes.string,
-  width: PropTypes.number.isRequired,
-  height: PropTypes.number.isRequired,
-  layers: PropTypes.arrayOf(PropTypes.instanceOf(Layer)).isRequired,
-  effects: PropTypes.arrayOf(PropTypes.instanceOf(Effect)),
-  gl: PropTypes.object,
-  debug: PropTypes.bool,
-  viewport: PropTypes.instanceOf(Viewport),
-  onWebGLInitialized: PropTypes.func,
-  onLayerClick: PropTypes.func,
-  onLayerHover: PropTypes.func
-};
-
-const defaultProps = {
-  id: 'deckgl-overlay',
-  debug: false,
-  gl: null,
-  effects: [],
-  onWebGLInitialized: noop,
-  onLayerClick: noop,
-  onLayerHover: noop
-};
+import {WebGLRenderer, WebGL2Renderer} from '../renderer';
+import {DeckGLOriginal} from './deckgl-original';
+import {EventManager} from '../event';
+import Axes from '../../../layers/infovis/axes';
+import Plane from '../../../layers/infovis/plane';
 
 export default class DeckGL extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
-    this.needsRedraw = true;
-    this.layerManager = null;
-    this.effectManager = null;
-    autobind(this);
+
+    this.state = {
+      width: props.width,
+      height: props.height,
+      threeD: props.threeD
+    };
+
+    this.startTime = new Date();
+    this.previousTime = new Date();
+    this.currentTime = new Date();
+
+    this.canvas = null;
+    this.renderer = null;
+    this.container = null;
+    this.cameras = new Set();
+    this.eventManager = null;
+
+    this.propsChanged = true;
+
+    this.dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+
+    this.internalLayers = [];
+    this.allLayers = [];
+  }
+
+  componentWillMount() {
+  }
+
+  componentDidMount() {
+    this.canvas = this.refs.canvas;
+
+    const debug = false;
+    const glOptions = null;
+    const rendererType = 'WebGL2';
+
+    // Before creating the WebGL renderer, a canvas should be ready
+    switch (rendererType) {
+    case 'WebGL':
+      this.renderer = new WebGLRenderer({controller: this, canvas: this.canvas, debug, glOptions});
+      break;
+    case 'WebGL2':
+      this.renderer = new WebGL2Renderer({controller: this, canvas: this.canvas, debug, glOptions});
+      break;
+    default:
+      console.error('unknown type of renderer');
+      break;
+    }
+
+    this.container = new DeckGLOriginal({controller: this});
+
+    this.eventManager = new EventManager({controller: this, canvas: this.canvas});
+
+    // These are all "layers"
+    // These two are opaque layers
+    const axes = new Axes();
+    this.container.addLayers(axes);
+
+    const planeXY = new Plane({
+      data: [-1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1, 0],
+      id: 'planeXY',
+      cameraID: 'axis-cam'
+    });
+
+    this.internalLayers.push(planeXY);
+
+    const planeYZ = new Plane({
+      data: [0, -1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1],
+      id: 'planeYZ',
+      cameraID: 'axis-cam'
+    });
+
+    this.internalLayers.push(planeYZ);
+
+    const planeXZ = new Plane({
+      data: [-1, 0, -1, 1, 0, -1, -1, 0, 1, 1, 0, 1],
+      id: 'planeXZ',
+      cameraID: 'axis-cam'
+    });
+
+    this.internalLayers.push(planeXZ);
+
+    const digitBoard = new Plane({
+      data: [-1, -1, -0.1, 1, -1, -0.1, -1, 1, -0.1, 1, 1, -0.1],
+      id: 'digitBoard',
+      cameraID: 'digit-cam',
+      textures: [{id: 'digit', width: 28, height: 28}]
+    });
+    this.internalLayers.push(digitBoard);
+
+    let cameraID = 'default-cam';
+
+    if (this.props.threeD) {
+      this.renderer.newPerspectiveCamera({
+        id: cameraID,
+        pos: [0.0, 0.0, -50],
+        aim: [0.0, 0.0, 0.0],
+        up: [0.0, -1.0, 0.0],
+        fovY: 45 / 180 * Math.PI,
+        near: 1,
+        far: 1e4,
+        texture: true,
+        controlType: 'target'
+      });
+
+      this.cameras.add(cameraID);
+
+      cameraID = 'axis-cam';
+      this.renderer.newPerspectiveCamera({
+        id: cameraID,
+        pos: [0.0, 0.0, -6],
+        aim: [0.0, 0.0, 0.0],
+        up: [0.0, -1.0, 0.0],
+        fovY: 45 / 180 * Math.PI,
+        near: 0.1,
+        far: 1000.0,
+        texture: true,
+        width: 256,
+        height: 256,
+        controlType: 'arc-rotate'
+      });
+      this.cameras.add(cameraID);
+
+      cameraID = 'digit-cam';
+      this.renderer.newPerspectiveCamera({
+        id: cameraID,
+        pos: [0.0, 0.0, -2],
+        aim: [0.0, 0.0, 0.0],
+        up: [0.0, -1.0, 0.0],
+        fovY: 45 / 180 * Math.PI,
+        near: 0.1,
+        far: 1000.0,
+        texture: true,
+        corner: 'top-left', // this is a heck
+        width: 256,
+        height: 256
+      });
+      this.cameras.add(cameraID);
+
+    } else {
+      this.renderer.newPerspectiveCamera({
+        id: cameraID,
+        pos: [0.0, 0.0, -100],
+        aim: [0.0, 0.0, 0.0],
+        up: [0.0, -1.0, 0.0],
+        fovY: 45 / 180 * Math.PI,
+        near: 1,
+        far: 1e4,
+        texture: true,
+        controlType: 'standard-2d'
+      });
+
+      this.cameras.add(cameraID);
+    }
+
+    // Initial set up of the animation loop
+    if (typeof window !== 'undefined') {
+      this.animationFrame = requestAnimationFrame(this._animationLoop.bind(this));
+    }
   }
 
   componentWillReceiveProps(nextProps) {
-    this._updateLayers(nextProps);
+    this.updateLayers(nextProps);
   }
 
-  _updateLayers(nextProps) {
-    const {width, height, latitude, longitude, zoom, pitch, bearing, altitude} = nextProps;
-    let {viewport} = nextProps;
+  _animationLoop() {
+    this.previousTime = this.currentTime;
+    this.currentTime = new Date();
 
-    // If Viewport is not supplied, create one from mercator props
-    viewport = viewport || new WebMercatorViewport({
-      width, height, latitude, longitude, zoom, pitch, bearing, altitude
+    if (this.renderer && this.renderer.activated && this.renderer.needsRedraw) {
+      this.draw();
+    }
+
+    if (typeof window !== 'undefined') {
+      this.animationFrame = requestAnimationFrame(this._animationLoop.bind(this));
+    }
+  }
+
+  routeCameraAction(action) {
+    this.renderer.cameraManager.processAction(action);
+  }
+
+  routeContainerAction(action) {
+    this.container.processAction(action);
+  }
+
+  routePickingAction(action) {
+    const pickingRay = this.renderer.getPickingRay({
+      screenCoord: [action.event.offsetX, action.event.offsetY]
     });
-
-    if (this.layerManager) {
-      this.layerManager
-        .setViewport(viewport)
-        .updateLayers({newLayers: nextProps.layers});
+    if (action.rayOnly === false) {
+      this.container.processPickingAction({ray: pickingRay});
     }
   }
 
-  _onRendererInitialized({gl, canvas}) {
-    gl.enable(GL.BLEND);
-    gl.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
-
-    this.props.onWebGLInitialized(gl);
-
-    // Note: avoid React setState due GL animation loop / setState timing issue
-    this.layerManager = new LayerManager({gl});
-    this.effectManager = new EffectManager({gl, layerManager: this.layerManager});
-    for (const effect of this.props.effects) {
-      this.effectManager.addEffect(effect);
-    }
-    this._updateLayers(this.props);
-
-    // Check if a mouse event has been specified and that at least one of the layers is pickable
-    const hasEvent = this.props.onLayerClick !== noop || this.props.onLayerHover !== noop;
-    const hasPickableLayer = this.layerManager.layers.map(l => l.props.pickable).includes(true);
-    if (hasEvent && !hasPickableLayer) {
-      log.once(
-        0,
-        'You have supplied a mouse event handler but none of your layers got the `pickable` flag.'
-      );
+  animationLoopUpdate() {
+    if (this.container.isDataStructureChanged()) {
+      this.renderer.regenerateRenderableGeometries(this.container);
     }
 
-    this.events = addEvents(canvas, {
-      cacheSize: false,
-      cachePosition: false,
-      centerOrigin: false,
-      onClick: this._onClick,
-      onMouseMove: this._onMouseMove
-    });
-  }
-
-  // Route events to layers
-  _onClick(event) {
-    const {x, y} = event;
-    const selectedInfos = this.layerManager.pickLayer({x, y, mode: 'click'});
-    const firstInfo = selectedInfos.find(info => info.index >= 0);
-    // Event.event holds the original MouseEvent object
-    this.props.onLayerClick(firstInfo, selectedInfos, event.event);
-  }
-
-  // Route events to layers
-  _onMouseMove(event) {
-    const {x, y} = event;
-    const selectedInfos = this.layerManager.pickLayer({x, y, mode: 'hover'});
-    const firstInfo = selectedInfos.find(info => info.index >= 0);
-    // Event.event holds the original MouseEvent object
-    this.props.onLayerHover(firstInfo, selectedInfos, event.event);
-  }
-
-  _onRenderFrame({gl}) {
-    if (!this.layerManager.needsRedraw({clearRedrawFlags: true})) {
-      return;
+    if (this.container.isDataChanged()) {
+      this.renderer.updateRenderableGeometries(this.container.attributesToUpdate());
     }
-    // clear depth and color buffers
-    gl.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+  }
 
-    this.effectManager.preDraw();
+  propsChangedUpdate() {
+    /* layer comparison. */
+    this.allLayers = this.internalLayers.concat(layers);
+    this.container.processLayers(this.allLayers)
+    this.propsChanged = false;
+  }
 
-    this.layerManager.drawLayers({pass: 'primary'});
+  updateLayers(props) {
+    // If props have changed after last animation loop
+    this.propsChangedUpdate(props);
 
-    this.effectManager.draw();
+    // // Called at every animation loop
+    this.animationLoopUpdate();
+  }
+
+  // updateRenderableGeometries({layerID, groupID, meshID, propertyID}) {
+  //   this.renderer.updateRenderableGeometries({
+  //     container: this.container,
+  //     layerID,
+  //     groupID,
+  //     meshID,
+  //     attributeID: propertyID
+  //   });
+  //   this.renderer.needsRedraw = true;
+  // }
+
+  processPickingResult({layer, result}) {
+    // if (layer instanceof TSNEScatterplot3D) {
+    //   if (result !== undefined) {
+    //     this.setTextureData({
+    //       id: 'digit',
+    //       data: result.data.image
+    //     });
+    //   }
+    // } else if (layer instanceof Graph3D) {
+    // this.props.onElementPicked(result);
+    // }
+    console.log('picking result: ', result);
+  }
+
+  setTextureData({id, data}) {
+    this.renderer.textureManager.setTextureData({id, data});
+    this.renderer.needsRedraw = true;
+  }
+
+  draw() {
+    this.renderer.render();
+    this.renderer.needsRedraw = false;
   }
 
   render() {
-    const {width, height, gl, debug} = this.props;
-
-    return createElement(WebGLRenderer, Object.assign({}, this.props, {
-      width,
-      height,
-      gl,
-      debug,
-      viewport: {x: 0, y: 0, width, height},
-      onRendererInitialized: this._onRendererInitialized,
-      onNeedRedraw: this._onNeedRedraw,
-      onRenderFrame: this._onRenderFrame,
-      onMouseMove: this._onMouseMove,
-      onClick: this._onClick
-    }));
+    const {width, height, style} = this.props;
+    return (
+      <canvas
+        ref = {'canvas'}
+        width = {this.state.width * this.dpr}
+        height = {this.state.height * this.dpr}
+        style = {{...style, width, height}}/>
+    );
   }
-}
 
-DeckGL.propTypes = propTypes;
-DeckGL.defaultProps = defaultProps;
+}

@@ -3,7 +3,7 @@ dist/
 dist-es6/
 dist-demo/
 node_modules/
-
+*data/
 example/bundle.js
 examples/winds/data/*.html
 mapbox-token.js

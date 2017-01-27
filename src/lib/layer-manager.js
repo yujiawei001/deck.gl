@@ -30,55 +30,16 @@
 import Layer from './layer';
 import {log} from './utils';
 import assert from 'assert';
-import {drawLayers, pickLayers} from './draw-and-pick';
-// import {Viewport} from 'viewport-mercator-project';
-import {Viewport} from './viewports';
-
-import {FramebufferObject} from 'luma.gl';
 
 export default class LayerManager {
-  constructor({gl}) {
+  constructor() {
     this.prevLayers = [];
     this.layers = [];
-    // Tracks if any layers were drawn last update
-    // Needed to ensure that screen is cleared when no layers are shown
-    this.drewLayers = false;
-    this.oldContext = {};
-    this.context = {
-      gl,
-      uniforms: {},
-      viewport: null,
-      viewportChanged: true,
-      pickingFBO: null
-    };
-    this.redrawNeeded = true;
+    this.context = {};
     Object.seal(this.context);
   }
 
-  setViewport(viewport) {
-    assert(viewport instanceof Viewport, 'Invalid viewport');
-
-    // TODO - viewport change detection breaks METER_OFFSETS mode
-    // const oldViewport = this.context.viewport;
-    // const viewportChanged = !oldViewport || !viewport.equals(oldViewport);
-
-    const viewportChanged = true;
-
-    if (viewportChanged) {
-      Object.assign(this.oldContext, this.context);
-      this.context.viewport = viewport;
-      this.context.viewportChanged = true;
-      this.context.uniforms = {};
-      log(4, viewport);
-    }
-
-    return this;
-  }
-
   updateLayers({newLayers}) {
-    /* eslint-disable */
-    assert(this.context.viewport,
-      'LayerManager.updateLayers: viewport not set');
 
     // Filter out any null layers
     newLayers = newLayers.filter(newLayer => newLayer !== null);
@@ -99,64 +60,6 @@ export default class LayerManager {
       throw error;
     }
     return this;
-  }
-
-  drawLayers({pass}) {
-    assert(this.context.viewport, 'LayerManager.drawLayers: viewport not set');
-
-    drawLayers({layers: this.layers, pass});
-
-    return this;
-  }
-
-  pickLayer({x, y, mode}) {
-    const {gl, uniforms} = this.context;
-
-    // Set up a frame buffer if needed
-    if (this.context.pickingFBO === null ||
-      gl.canvas.width !== this.context.pickingFBO.width ||
-      gl.canvas.height !== this.context.pickingFBO.height) {
-      this.context.pickingFBO = new FramebufferObject(gl, {
-        width: gl.canvas.width,
-        height: gl.canvas.height
-      });
-    }
-    return pickLayers(gl, {
-      x,
-      y,
-      uniforms: {
-        renderPickingBuffer: true,
-        picking_uEnable: true
-      },
-      layers: this.layers,
-      mode,
-      pickingFBO: this.context.pickingFBO
-    });
-  }
-
-  needsRedraw({clearRedrawFlags = false} = {}) {
-    if (!this.context.viewport) {
-      return false;
-    }
-
-    let redraw = false;
-
-    // Make sure that buffer is cleared once when layer list becomes empty
-    if (this.layers.length === 0 && this.drewLayers) {
-      redraw = true;
-      return true;
-    }
-
-    if (this.redrawNeeded) {
-      this.redrawNeeded = false;
-      redraw = true;
-    }
-
-    for (const layer of this.layers) {
-      redraw = redraw || layer.getNeedsRedraw({clearRedrawFlags});
-      this.drewLayers = true;
-    }
-    return redraw;
   }
 
   // PRIVATE METHODS
