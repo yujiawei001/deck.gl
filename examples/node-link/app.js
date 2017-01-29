@@ -6,7 +6,8 @@ import ReactDOM from 'react-dom';
 import DeckGL from 'deck.gl/react';
 import FileLoader from 'deck.gl/lib/utils/file-loader';
 
-import {GraphEdge, GraphNode, Graph, GraphLayoutForceDirected} from 'deck.gl/layers/infovis/graph-layer/graph-utils';
+import {GraphEdge, GraphNode, Graph} from 'deck.gl/layers/infovis/graph-layer/graph';
+import {GraphLayoutForceDirected} from 'deck.gl/layers/infovis/graph-layer/graph-layout';
 import {GraphLayer} from 'deck.gl';
 
 class Root extends Component {
