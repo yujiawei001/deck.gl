@@ -4,6 +4,22 @@
  * @param {Array} array The array to flatten.
  * @return {Array} Returns the new flattened array.
  */
+export function flatten2D(data) {
+  const dim0 = data.length;
+  if (data[0] instanceof Array === false) {
+    return data;
+  }
+  const dim1 = data[0].length;
+
+  const retArray = new Array(dim0 * dim1);
+  for (let i = 0; i < dim0; i++) {
+    for (let j = 0; j < dim1; j++) {
+      retArray[j + i * dim1] = data[i][j];
+    }
+  }
+  return retArray;
+}
+
 export function flatten(array, result = []) {
   let index = -1;
   while (++index < array.length) {

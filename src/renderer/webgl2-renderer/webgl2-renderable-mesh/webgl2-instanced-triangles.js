@@ -41,10 +41,10 @@ export default class WebGL2InstancedTriangleMesh extends WebGL2RenderableMesh {
     );
 
     this._vertexAttributes.set(
-      'instancedRadius',
+      'instancedSize',
       {
         bufferID: this.renderer.bufferManager.newBuffer({
-          data: instancedTriangleMesh.properties.get('instancedRadius').hostData,
+          data: instancedTriangleMesh.properties.get('instancedSize').hostData,
           size: 1,
           instanced: 1,
           id: instancedTriangleMesh.id + '_instanced_radius'
@@ -62,7 +62,7 @@ export default class WebGL2InstancedTriangleMesh extends WebGL2RenderableMesh {
 
     attribute vec3 instancedPosition;
     attribute vec4 instancedColor;
-    attribute float instancedRadius;
+    attribute float instancedSize;
 
     uniform mat4 modelMatrix;
     uniform mat4 viewProjectionMatrix;
@@ -71,7 +71,7 @@ export default class WebGL2InstancedTriangleMesh extends WebGL2RenderableMesh {
     varying vec2 vTexCoords;
 
     void main(void) {
-      vec4 position_clipspace = viewProjectionMatrix * modelMatrix * vec4((position * instancedRadius + instancedPosition), 1.0);
+      vec4 position_clipspace = viewProjectionMatrix * modelMatrix * vec4((position * instancedSize + instancedPosition), 1.0);
       vColor = instancedColor;
       //vColor = vec4(1.0, 0.5, 0.5, 1.0);
       vTexCoords = texCoords;

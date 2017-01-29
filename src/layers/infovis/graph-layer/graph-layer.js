@@ -17,9 +17,63 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
+import {Layer} from '../../../lib';
+import {InstancedSpheres, Lines} from '../../../mesh';
 export default class GraphLayer extends Layer {
 
+  initializeState({props}) {
+    this.state = {
+      meshes: this._generateMeshes()
+    };
+    console.log('initializeState props', props);
+  }
+
+  updateState({oldProps, props}) {
+
+    if (changeFlags.dataChanged) {
+      // for (const {meshID, propertyID} of props.updateTriggers) {
+      this._updateMeshes({});
+      // }
+    }
+    console.log('updateState props', props);
+  }
+
+  _generateMeshes() {
+    const meshes = new Map();
+    const nodes = new InstancedSpheres({
+      instancedPosition: this.props.data.getNodePosition(),
+      instancedColor: this.props.data.getNodeColor(),
+      instancedSize: this.props.data.getNodeSize(),
+      id: `${this.props.id}_nodes`,
+      cameraID: this.props.cameraID
+    });
+
+    meshes.set(`${this.props.id}_nodes`, nodes);
+
+    const edges = new Lines({
+      position: this.props.data.getNodePosition(),
+      color: this.props.data.getNodeColor(),
+      index: this.props.data.getEdgeNodeIndex(),
+      id: `${this.props.id}_edges`,
+      cameraID: this.props.cameraID
+    });
+
+    meshes.set(`${this.props.id}_edges`, edges);
+
+    return meshes;
+  }
+
+  _updateMeshes({meshID, propertyID}) {
+    this.state.meshes.get(`${this.props.id}_nodes`).updateProperty({
+      propertyID: 'instancedPosition',
+      data: this.props.graph.getNodePosition()
+    });
+
+    this.state.meshes.get(`${this.props.id}_edges`).updateProperty({
+      propertyID: 'position',
+      data: this.props.graph.getNodePosition()
+    });
+  }
 }
 
 GraphLayer.layerName = 'GraphLayer';

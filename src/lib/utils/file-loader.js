@@ -1,7 +1,8 @@
-export default class FileLoader {
+import {csv, json} from 'd3-request';
 
+export default class FileLoader {
   static loadCSV(path, onDataLoaded) {
-    request.csv(path, function loadCSV(error, data) {
+    csv(path, function loadCSV(error, data) {
       if (error) {
         console.log('load csv error: ', error);
       }
@@ -11,9 +12,9 @@ export default class FileLoader {
 
   static loadCSVs(paths, onDataLoaded) {
     let counter = paths.length;
-    let allData = new Map();
+    const allData = new Map();
     for (let i = 0; i < paths.length; i++) {
-      request.csv(paths[i], function loadCSV(error, data) {
+      csv(paths[i], function loadCSV(error, data) {
         if (error) {
           console.log('load csv error, path: ', paths[i], ' error:', error);
         }

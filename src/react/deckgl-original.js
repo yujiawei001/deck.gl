@@ -21,19 +21,46 @@ import autobind from './autobind';
 import {LayerManager} from '../lib';
 import {log} from '../lib/utils';
 
-export default class DeckGLOriginal {
+export class DeckGLOriginal {
   constructor({controller}) {
-    //this.layerManager = new LayerManager();
+    this.layerManager = new LayerManager();
+    // temporarily exposing these two props
+    this.dataStructureChanged = false;
+    this.dataChanged = false;
+    this.hackCounterForRunningDataStructureGenerationForOneTime = 0;
     autobind(this);
   }
 
   processLayers(layers) {
     this._updateLayers(layers);
+    if (this.hackCounterForRunningDataStructureGenerationForOneTime === 0) {
+      this.dataStructureChanged = true;
+      this.hackCounterForRunningDataStructureGenerationForOneTime++;
+    }
+    this.dataChanged = true;
   }
 
   _updateLayers(nextProps) {
-    // if (this.layerManager) {
-    //   this.layerManager.updateLayers({newLayers: nextProps.layers});
-    // }
+    if (this.layerManager) {
+      this.layerManager.updateLayers({newLayers: nextProps.layers});
+    }
+  }
+
+  layersToRender() {
+    return this.layerManager.layers;
+  }
+  attributesToUpdate() {
+    return;
+  }
+  isDataStructureChanged() {
+    return this.dataStructureChanged;
+  }
+
+  isDataChanged() {
+    return this.dataChanged;
+  }
+
+  processPickingAction({ray}) {
+    this.layerManager.processPickingAction({ray});
   }
 }

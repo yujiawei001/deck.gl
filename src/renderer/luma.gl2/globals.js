@@ -1,6 +1,6 @@
 /* global window, global */
 import isBrowser from './utils/is-browser';
-import {version} from '../../../node_modules/luma.gl/package.json';
+import {version} from '../../../examples/node-link/node_modules/luma.gl/package.json';
 
 const _global = isBrowser ? window : global;
 

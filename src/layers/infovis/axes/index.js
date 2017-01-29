@@ -1,1 +1,1 @@
-export {default as default} from './axes-layer';
+export {default as default} from './axes';

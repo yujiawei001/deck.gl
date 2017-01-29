@@ -1,35 +1,13 @@
-import {Ray} from '../utils';
+import {Ray} from '../lib/utils/ray';
 
 import {GL} from './luma.gl2/webgl2';
 import {vec3, vec4, mat4} from 'gl-matrix';
-
-/* This is here to match the Geometry class.
-  It holds the renderable model of a layer
-*/
-export class RenderableGeometry {
-  constructor({id}) {
-    this.groups = [];
-    this.id = id;
-  }
-}
-
-/* This is here to match the Group class
-  Renderable group is here to merely add another
-  layer of optimizability. It is designed that meshes within
-  the same renderable group can be reordered without affecting
-  the visual effect
-*/
-export class RenderableGroup {
-  constructor() {
-    this.meshes = [];
-  }
-}
 
 // On screen WebGL renderer
 export class Renderer {
   constructor({controller, canvas, debug, glOptions}) {
 
-    this.activated = true;
+    this.activated = false;
 
     // if camera/viewport changed
     this.needsRedraw = false;
@@ -38,11 +16,13 @@ export class Renderer {
 
     this.currentPickingRay = null;
 
-       // Context creation
+    this.renderableMeshes = new Map();
+    // Context creation
     this.controller = controller;
     this.currentCanvas = canvas;
     this.debug = debug;
     this.contextOptions = glOptions;
+
 
     this.dpr = controller.dpr;
   }
@@ -80,38 +60,21 @@ export class Renderer {
   /* Generating renderable geometry from abstract geometry.
   Renderable geometry doesn't need to match abstract geometry but to
   maximize the rendering performance. */
-  regenerateRenderableGeometries(container) {
+  regenerateRenderableMeshes(container) {
 
     /* When data structure changed, we need to update the rendering geometries.
     Right now, rendering geometries are regenerated from ground up. This should be
     optimized to regenerating only the change part of the whole scene tree.
     Major optimization could happen here */
-    if (container.dataStructureChanged === true) {
-      this.renderableGeometries = [];
-      const renderableGeometries = this.renderableGeometries;
-
-      for (let i = 0; i < container.layerOrder.length; i++) {
-        const layer = container.layers.get(container.layerOrder[i]);
-        const currentGeometry = layer.geometry;
-        const currentRenderableGeometry = new RenderableGeometry({id: layer.id});
-
-        renderableGeometries.push(currentRenderableGeometry);
-
-        for (let j = 0; j < currentGeometry.groups.length; j++) {
-          const currentRenderableGroup = new RenderableGroup();
-          currentRenderableGeometry.groups.push(currentRenderableGroup);
-
-          const currentGroup = currentGeometry.groups[j];
-
-          for (let k = 0; k < currentGroup.meshes.length; k++) {
-            currentRenderableGroup.meshes.push(this.generateRenderableMeshes(currentGroup.meshes[k]));
-          }
-        }
+    const layersToRender = container.layersToRender();
+    for (let i = 0; i < layersToRender.length; i++) {
+      const meshes = layersToRender[i].state.meshes;
+      for (const mesh of meshes.values()) {
+        this.renderableMeshes.set(`${mesh.id}_render`, this.generateRenderableMeshes(mesh));
       }
-
-      // Optimizing renderingGeometries
-      // TODO
     }
+    //   // Optimizing renderingGeometries
+    //   // TODO
   }
 
   /* Generate renderable mesh from abstract mesh.
@@ -134,20 +97,20 @@ export class Renderer {
   }
 
   /* This function will be significantly improved */
-  updateRenderableGeometries({container, layerID, groupID, meshID, attributeID}) {
-    const geometry = this.getRenderableGeometryByID(layerID);
-    geometry.groups[groupID].meshes[meshID].updateAttribute({
-      attributeID,
-      mesh: container.getLayer(layerID).geometry.groups[groupID].meshes[meshID]
-    });
+  updateRenderableMeshes({container, layerID, groupID, meshID, attributeID}) {
+    // const geometry = this.getRenderableGeometryByID(layerID);
+    // geometry.groups[groupID].meshes[meshID].updateAttribute({
+    //   attributeID,
+    //   mesh: container.getLayer(layerID).geometry.groups[groupID].meshes[meshID]
+    // });
   }
 
   getRenderableGeometryByID(ID) {
-    for (let i = 0; i < this.renderableGeometries.length; i++) {
-      if (this.renderableGeometries[i].id === ID) {
-        return this.renderableGeometries[i];
-      }
-    }
+    // for (let i = 0; i < this.renderableGeometries.length; i++) {
+    //   if (this.renderableGeometries[i].id === ID) {
+    //     return this.renderableGeometries[i];
+    //   }
+    // }
     return null;
   }
   /* Rendering function
@@ -156,32 +119,24 @@ export class Renderer {
   render function
   */
   render() {
-    if (this.needsRedraw) {
-      // Render to respective framebuffers
-      for (const cameraID of this.cameraManager.cameras.keys()) {
-        // Get current camera and set appropriate framebuffer
-        const currentCamera = this.cameraManager.getCameraAndSetTarget(cameraID);
-        const cameraUniforms = currentCamera.getTransformMatrices();
-        for (let i = 0; i < this.renderableGeometries.length; i++) {
-          const currentRenderableGeometry = this.renderableGeometries[i];
-          for (let j = 0; j < currentRenderableGeometry.groups.length; j++) {
-            const currentRenderableGroup = currentRenderableGeometry.groups[j];
-            for (let k = 0; k < currentRenderableGroup.meshes.length; k++) {
-              const currentRenderableMesh = currentRenderableGroup.meshes[k];
-              if (currentRenderableMesh.cameraID === currentCamera.id || currentRenderableMesh.cameraID === 'all') {
-                currentRenderableMesh.render(cameraUniforms);
-              }
-            }
-          }
+    // Render to respective framebuffers
+    for (const cameraID of this.cameraManager.cameras.keys()) {
+      // Get current camera and set appropriate framebuffer
+      const currentCamera = this.cameraManager.getCameraAndSetTarget(cameraID);
+      const cameraUniforms = currentCamera.getTransformMatrices();
+
+      for (const renderableMesh of this.renderableMeshes.values()) {
+        if (renderableMesh.cameraID === currentCamera.id || renderableMesh.cameraID === 'all') {
+          renderableMesh.render(cameraUniforms);
         }
       }
-
-      this.renderCameraTargetsToScreen();
-      // console.log("Draw completed. Frame No. ", this.frameNo);
-
-      this.needsRedraw = false;
-      this.frameNo++;
     }
+
+    this.renderCameraTargetsToScreen();
+    console.log("Draw completed. Frame No. ", this.frameNo);
+
+    this.needsRedraw = false;
+    this.frameNo++;
   }
 
   renderCameraTargetsToScreen() {

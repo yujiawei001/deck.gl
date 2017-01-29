@@ -1,10 +1,10 @@
-import React, {PropTypes} from 'react';
+import React, {PropTypes, createElement} from 'react';
 
 import {WebGLRenderer, WebGL2Renderer} from '../renderer';
 import {DeckGLOriginal} from './deckgl-original';
 import {EventManager} from '../event';
-import Axes from '../../../layers/infovis/axes';
-import Plane from '../../../layers/infovis/plane';
+// import Axes from '../layers/infovis/axes';
+// import Plane from '../layers/infovis/plane';
 
 export default class DeckGL extends React.Component {
   constructor(props) {
@@ -61,42 +61,42 @@ export default class DeckGL extends React.Component {
 
     this.eventManager = new EventManager({controller: this, canvas: this.canvas});
 
-    // These are all "layers"
-    // These two are opaque layers
-    const axes = new Axes();
-    this.container.addLayers(axes);
+    // // These are all "layers"
+    // // These two are opaque layers
+    // const axes = new Axes();
+    // this.container.addLayers(axes);
 
-    const planeXY = new Plane({
-      data: [-1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1, 0],
-      id: 'planeXY',
-      cameraID: 'axis-cam'
-    });
+    // const planeXY = new Plane({
+    //   data: [-1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1, 0],
+    //   id: 'planeXY',
+    //   cameraID: 'axis-cam'
+    // });
 
-    this.internalLayers.push(planeXY);
+    // this.internalLayers.push(planeXY);
 
-    const planeYZ = new Plane({
-      data: [0, -1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1],
-      id: 'planeYZ',
-      cameraID: 'axis-cam'
-    });
+    // const planeYZ = new Plane({
+    //   data: [0, -1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1],
+    //   id: 'planeYZ',
+    //   cameraID: 'axis-cam'
+    // });
 
-    this.internalLayers.push(planeYZ);
+    // this.internalLayers.push(planeYZ);
 
-    const planeXZ = new Plane({
-      data: [-1, 0, -1, 1, 0, -1, -1, 0, 1, 1, 0, 1],
-      id: 'planeXZ',
-      cameraID: 'axis-cam'
-    });
+    // const planeXZ = new Plane({
+    //   data: [-1, 0, -1, 1, 0, -1, -1, 0, 1, 1, 0, 1],
+    //   id: 'planeXZ',
+    //   cameraID: 'axis-cam'
+    // });
 
-    this.internalLayers.push(planeXZ);
+    // this.internalLayers.push(planeXZ);
 
-    const digitBoard = new Plane({
-      data: [-1, -1, -0.1, 1, -1, -0.1, -1, 1, -0.1, 1, 1, -0.1],
-      id: 'digitBoard',
-      cameraID: 'digit-cam',
-      textures: [{id: 'digit', width: 28, height: 28}]
-    });
-    this.internalLayers.push(digitBoard);
+    // const digitBoard = new Plane({
+    //   data: [-1, -1, -0.1, 1, -1, -0.1, -1, 1, -0.1, 1, 1, -0.1],
+    //   id: 'digitBoard',
+    //   cameraID: 'digit-cam',
+    //   textures: [{id: 'digit', width: 28, height: 28}]
+    // });
+    // this.internalLayers.push(digitBoard);
 
     let cameraID = 'default-cam';
 
@@ -204,19 +204,24 @@ export default class DeckGL extends React.Component {
   }
 
   animationLoopUpdate() {
-    if (this.container.isDataStructureChanged()) {
-      this.renderer.regenerateRenderableGeometries(this.container);
-    }
-
-    if (this.container.isDataChanged()) {
-      this.renderer.updateRenderableGeometries(this.container.attributesToUpdate());
-    }
   }
 
   propsChangedUpdate() {
     /* layer comparison. */
-    this.allLayers = this.internalLayers.concat(layers);
-    this.container.processLayers(this.allLayers)
+    this.allLayers = this.internalLayers.concat(this.props.layers);
+
+    this.container.processLayers({layers: this.allLayers});
+
+    if (this.container.dataStructureChanged) {
+      this.renderer.regenerateRenderableMeshes(this.container);
+      this.renderer.activated = true;
+      this.container.dataStructureChanged = false;
+    }
+
+    if (this.container.dataChanged) {
+      //this.renderer.updateRenderableMeshes(this.container.attributesToUpdate());
+    }
+
     this.propsChanged = false;
   }
 
@@ -265,13 +270,13 @@ export default class DeckGL extends React.Component {
 
   render() {
     const {width, height, style} = this.props;
-    return (
-      <canvas
-        ref = {'canvas'}
-        width = {this.state.width * this.dpr}
-        height = {this.state.height * this.dpr}
-        style = {{...style, width, height}}/>
-    );
+
+    return createElement('canvas', {
+      ref: 'canvas',
+      width: this.state.width * this.dpr,
+      height: this.state.height * this.dpr,
+      style: Object.assign({}, style, {width, height})
+    });
   }
 
 }

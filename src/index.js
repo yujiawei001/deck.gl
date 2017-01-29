@@ -52,7 +52,6 @@ export {default as Axes} from './layers/infovis/axes';
 
 // React exports
 export {default as autobind} from './react/autobind';
-export {default as DeckGLOriginal} from './react/deckgl-original';
 export {default as DeckGL} from './react/deckgl';
 export {default as default} from './react/deckgl';
 

@@ -96,7 +96,7 @@ export default class GeoJsonLayer extends Layer {
     });
   }
 
-  renderLayers() {
+  getSubLayers() {
     const {subLayers: {pointFeatures, lineFeatures, polygonFeatures,
       polygonOutlineFeatures}} = this.state;
     const {id, getPointColor, getPointSize, getStrokeColor, getStrokeWidth,

@@ -2,29 +2,28 @@
 import 'babel-polyfill';
 
 import React, {Component} from 'react';
-import {render} from 'react-dom';
+import ReactDOM from 'react-dom';
 import DeckGL from 'deck.gl/react';
 import FileLoader from 'deck.gl/lib/utils/file-loader';
 
-import {GraphEdge, GraphNode, Graph} from 'deck.gl/lib/utils/graph';
-import GraphLayer from 'deck.gl';
+import {GraphEdge, GraphNode, Graph, GraphLayoutForceDirected} from 'deck.gl/layers/infovis/graph-layer/graph-utils';
+import {GraphLayer} from 'deck.gl';
 
 class Root extends Component {
-
   constructor(props) {
     super(props);
 
     /* graph */
     FileLoader.loadCSVs([
-      './private_data/device_node.csv',
-      './private_data/driver_node.csv',
-      './private_data/driver_trip_edge.csv',
-      './private_data/payment_node.csv',
-      './private_data/rider_node.csv',
-      './private_data/rider_trip_edge.csv',
-      './private_data/trip_node.csv',
-      './private_data/user_device_edge.csv',
-      './private_data/user_payment_edge.csv'
+      './private_data/ugraph/device_node.csv',
+      './private_data/ugraph/driver_node.csv',
+      './private_data/ugraph/driver_trip_edge.csv',
+      './private_data/ugraph/payment_node.csv',
+      './private_data/ugraph/rider_node.csv',
+      './private_data/ugraph/rider_trip_edge.csv',
+      './private_data/ugraph/trip_node.csv',
+      './private_data/ugraph/user_device_edge.csv',
+      './private_data/ugraph/user_payment_edge.csv'
     ],
     this._onGraphDataLoaded.bind(this));
 
@@ -33,7 +32,6 @@ class Root extends Component {
       height: 0
     };
   }
-
   componentWillMount() {
     window.addEventListener('resize', this._onResize.bind(this));
     this._onResize();
@@ -55,14 +53,13 @@ class Root extends Component {
   // Generate graph from loaded CSVs
   _onGraphDataLoaded(data) {
     console.log('graph data loaded');
-
-    const driverNodes = data.get('./private_data/driver_node.csv');
-    const riderNodes = data.get('./private_data/rider_node.csv');
-    const tripNodes = data.get('./private_data/trip_node.csv');
-    const driverTripEdges = data.get('./private_data/driver_trip_edge.csv');
-    const riderTripEdges = data.get('./private_data/rider_trip_edge.csv');
-    const userDeviceEdges = data.get('./private_data/user_device_edge.csv');
-    const deviceNodes = data.get('./private_data/device_nodes.csv');
+    const driverNodes = data.get('./private_data/ugraph/driver_node.csv');
+    const riderNodes = data.get('./private_data/ugraph/rider_node.csv');
+    const tripNodes = data.get('./private_data/ugraph/trip_node.csv');
+    const driverTripEdges = data.get('./private_data/ugraph/driver_trip_edge.csv');
+    const riderTripEdges = data.get('./private_data/ugraph/rider_trip_edge.csv');
+    const userDeviceEdges = data.get('./private_data/ugraph/user_device_edge.csv');
+    const deviceNodes = data.get('./private_data/ugraph/device_nodes.csv');
 
     const graph = new Graph();
     const riderMap = new Set();
@@ -70,7 +67,6 @@ class Root extends Component {
 
     const driverTripMap = new Map();
     const riderTripMap = new Map();
-
 
     for (let i = 0; i < driverNodes.length; i++) {
       driverMap.add(driverNodes[i].user_uuid);
@@ -134,57 +130,59 @@ class Root extends Component {
       }
 
       if (graphNode1 === undefined) {
-        graphNode1 = new GraphNode({id: edge.trip_uuid, type: 'rider'});
+        graphNode1 = new GraphNode({id: edge.trip_uuid, type: 'trip'});
         graph.addNode(graphNode1);
       }
 
       graphNode0.addAdjacentNode(graphNode1);
       graphNode1.addAdjacentNode(graphNode0);
 
-      let graphEdge0 = new GraphEdge({id: graphNode0.id + '_' + graphNode1.id, node0: graphNode0, node1: graphNode1, type: 'driver_rider'});
+      const graphEdge0 = new GraphEdge({id: graphNode0.id + '_' + graphNode1.id, node0: graphNode0, node1: graphNode1, type: 'driver_trip'});
 
       graph.addEdge(graphEdge0);
     }
 
-    // for (let i = 0; i < riderTripEdges.length; i++) {
-    //   const edge = riderTripEdges[i];
+    for (let i = 0; i < riderTripEdges.length; i++) {
+      const edge = riderTripEdges[i];
 
-    //   let graphNode0 = graph.nodes.get(edge.user_uuid);
-    //   let graphNode1 = graph.nodes.get(edge.trip_uuid);
+      let graphNode0 = graph.nodes.get(edge.user_uuid);
+      let graphNode1 = graph.nodes.get(edge.trip_uuid);
 
-    //   if (graphNode0 === undefined) {
-    //     graphNode0 = new GraphNode({id: edge.user_uuid, type: 'rider'});
-    //     graph.addNode(graphNode0);
-    //   }
+      if (graphNode0 === undefined) {
+        graphNode0 = new GraphNode({id: edge.user_uuid, type: 'rider'});
+        graph.addNode(graphNode0);
+      }
 
-    //   if (graphNode1 === undefined) {
-    //     graphNode1 = new GraphNode({id: edge.trip_uuid, type: 'trip'});
-    //     graph.addNode(graphNode1);
-    //   }
+      if (graphNode1 === undefined) {
+        graphNode1 = new GraphNode({id: edge.trip_uuid, type: 'trip'});
+        graph.addNode(graphNode1);
+      }
 
-    //   graphNode0.addAdjacentNode(graphNode1);
-    //   graphNode1.addAdjacentNode(graphNode0);
+      graphNode0.addAdjacentNode(graphNode1);
+      graphNode1.addAdjacentNode(graphNode0);
 
-    //   let graphEdge0 = new GraphEdge({id: graphNode0.id + '_' + graphNode1.id, node0: graphNode0, node1: graphNode1, type: 'user_trip'});
+      const graphEdge0 = new GraphEdge({id: graphNode0.id + '_' + graphNode1.id, node0: graphNode0, node1: graphNode1, type: 'user_trip'});
 
-    //   graph.addEdge(graphEdge0);
-    // }
+      graph.addEdge(graphEdge0);
+    }
 
+    // const graphLayer = new GraphLayer({
+    //   id: 'graph-scatterplot3D-gpu',
+    //   data: graph,
+    //   dof: 3,
+    //   numHops: 6
+    // });
 
-    const graphLayer = new GraphLayer({
-      id: 'graph-scatterplot3D-gpu',
-      data: graph,
-      dof: 3,
-      numHops: 6
-    });
+    const subgraph = graph.generateSubGraph({numHops: 3});
 
-    this.state.layers.push(graphLayer);
+    subgraph.setLayout(new GraphLayoutForceDirected({id: 'force-directed', graph: subgraph, dof: 3}));
 
     this.setState({
-      graph: this.state.graph
+      graph: subgraph
     });
 
     setInterval(this._handleTimerUpdate.bind(this), 16);
+    console.log("this.state.graph", this.state.graph);
   }
 
   _handleTimerUpdate() {
@@ -199,12 +197,12 @@ class Root extends Component {
       return null;
     }
 
+    //graph.layoutStep();
+
     const layers = [
       new GraphLayer({
         id: 'graph-3D',
-        data: graph,
-        dof: 3,
-        numHops: 6
+        data: graph
       })
     ];
 
@@ -216,10 +214,10 @@ class Root extends Component {
         debug />
     );
   }
-
 }
 
-const root = document.createElement('div');
-document.body.appendChild(root);
 
-render(<Root />, root);
+const container = document.createElement('div');
+document.body.appendChild(container);
+
+ReactDOM.render(<Root />, container);

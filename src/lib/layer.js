@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 /* global window */
-import {GL} from 'luma.gl';
-import AttributeManager from './attribute-manager';
 import {compareProps, log, count} from './utils';
 import assert from 'assert';
 
@@ -63,6 +61,12 @@ export default class Layer {
     this.id = props.id;
     this.props = props;
     this.oldProps = null;
+    this.changeFlags = {
+      propsChanged: false,
+      dataChanged: true,
+      dataStructureChanged: false,
+      reason: undefined
+    }
     this.state = null;
     this.context = null;
     this.count = counter++;
@@ -87,14 +91,14 @@ export default class Layer {
   }
 
   // Let's layer control if updateState should be called
-  shouldUpdateState({oldProps, props, oldContext, context, changeFlags}) {
-    return changeFlags.somethingChanged;
+  shouldUpdateState() {
+    return this.changeFlags.somethingChanged;
   }
 
   // Default implementation, all attributes will be invalidated and updated
   // when data changes
   updateState({oldProps, props, oldContext, context, changeFlags}) {
-    if (changeFlags.dataChanged) {
+    if (this.changeFlags.dataChanged) {
       this.invalidateAttribute('all');
     }
   }
@@ -105,222 +109,19 @@ export default class Layer {
   }
 
   // Implement to generate sublayers
-  renderLayers() {
+  getSubLayers() {
     return null;
-  }
-
-  // If state has a model, draw it with supplied uniforms
-  draw({uniforms = {}}) {
-    if (this.state.model) {
-      this.state.model.render(uniforms);
-    }
-  }
-
-  // If state has a model, draw it with supplied uniforms
-  /* eslint-disable max-statements */
-  pick({info, uniforms, pickEnableUniforms, pickDisableUniforms, mode}) {
-    const {gl} = this.context;
-    const {model} = this.state;
-
-    if (model) {
-      model.setUniforms(pickEnableUniforms);
-      model.render(uniforms);
-      model.setUniforms(pickDisableUniforms);
-
-      // Read color in the central pixel, to be mapped with picking colors
-      const [x, y] = info.devicePixel;
-      const color = new Uint8Array(4);
-      gl.readPixels(x, y, 1, 1, GL.RGBA, GL.UNSIGNED_BYTE, color);
-
-      // Index < 0 means nothing selected
-      info.index = this.decodePickingColor(color);
-      info.color = color;
-
-      // TODO - selectedPickingColor should be removed?
-      if (mode === 'hover') {
-        const selectedPickingColor = new Float32Array(3);
-        selectedPickingColor[0] = color[0];
-        selectedPickingColor[1] = color[1];
-        selectedPickingColor[2] = color[2];
-        this.setUniforms({selectedPickingColor});
-      }
-    }
   }
   /* eslint-enable max-statements */
 
   // END LIFECYCLE METHODS
   // //////////////////////////////////////////////////
 
-  // Default implementation of attribute invalidation, can be redefine
-  invalidateAttribute(name = 'all') {
-    if (name === 'all') {
-      this.state.attributeManager.invalidateAll();
-    } else {
-      this.state.attributeManager.invalidate(name);
-    }
-  }
-
-  // Calls attribute manager to update any WebGL attributes, can be redefined
-  updateAttributes(props) {
-    const {attributeManager, model} = this.state;
-    if (!attributeManager) {
-      return;
-    }
-
-    const numInstances = this.getNumInstances(props);
-    // Figure out data length
-    attributeManager.update({
-      data: props.data,
-      numInstances,
-      props,
-      buffers: props,
-      context: this,
-      // Don't worry about non-attribute props
-      ignoreUnknownAttributes: true
-    });
-    if (model) {
-      const changedAttributes = attributeManager.getChangedAttributes({clearChangedFlags: true});
-      model.setAttributes(changedAttributes);
-    }
-  }
-
   // Public API
 
   // Updates selected state members and marks the object for redraw
   setState(updateObject) {
     Object.assign(this.state, updateObject);
-    this.state.needsRedraw = true;
-  }
-
-  setNeedsRedraw(redraw = true) {
-    if (this.state) {
-      this.state.needsRedraw = redraw;
-    }
-  }
-
-  // PROJECTION METHODS
-
-  /**
-   * Projects a point with current map state (lat, lon, zoom, pitch, bearing)
-   *
-   * Note: Position conversion is done in shader, so in many cases there is no need
-   * for this function
-   * @param {Array|TypedArray} lngLat - long and lat values
-   * @return {Array|TypedArray} - x, y coordinates
-   */
-  project(lngLat) {
-    const {viewport} = this.context;
-    assert(Array.isArray(lngLat), 'Layer.project needs [lng,lat]');
-    return viewport.project(lngLat);
-  }
-
-  unproject(xy) {
-    const {viewport} = this.context;
-    assert(Array.isArray(xy), 'Layer.unproject needs [x,y]');
-    return viewport.unproject(xy);
-  }
-
-  projectFlat(lngLat) {
-    const {viewport} = this.context;
-    assert(Array.isArray(lngLat), 'Layer.project needs [lng,lat]');
-    return viewport.projectFlat(lngLat);
-  }
-
-  unprojectFlat(xy) {
-    const {viewport} = this.context;
-    assert(Array.isArray(xy), 'Layer.unproject needs [x,y]');
-    return viewport.unprojectFlat(xy);
-  }
-
-  screenToDevicePixels(screenPixels) {
-    const devicePixelRatio = typeof window !== 'undefined' ?
-      window.devicePixelRatio : 1;
-    return screenPixels * devicePixelRatio;
-  }
-
-  /**
-   * Returns the picking color that doesn't match any subfeature
-   * Use if some graphics do not belong to any pickable subfeature
-   * @return {Array} - a black color
-   */
-  nullPickingColor() {
-    return [0, 0, 0];
-  }
-
-  /**
-   * Returns the picking color that doesn't match any subfeature
-   * Use if some graphics do not belong to any pickable subfeature
-   * @param {int} i - index to be decoded
-   * @return {Array} - the decoded color
-   */
-  encodePickingColor(i) {
-    return [
-      (i + 1) % 256,
-      Math.floor((i + 1) / 256) % 256,
-      Math.floor((i + 1) / 256 / 256) % 256
-    ];
-  }
-
-  /**
-   * Returns the picking color that doesn't match any subfeature
-   * Use if some graphics do not belong to any pickable subfeature
-   * @param {Uint8Array} color - color array to be decoded
-   * @return {Array} - the decoded picking color
-   */
-  decodePickingColor(color) {
-    assert(color instanceof Uint8Array);
-    const [i1, i2, i3] = color;
-    // 1 was added to seperate from no selection
-    const index = i1 + i2 * 256 + i3 * 65536 - 1;
-    return index;
-  }
-
-  calculateInstancePickingColors(attribute, {numInstances}) {
-    const {value, size} = attribute;
-    // add 1 to index to seperate from no selection
-    for (let i = 0; i < numInstances; i++) {
-      const pickingColor = this.encodePickingColor(i);
-      value[i * size + 0] = pickingColor[0];
-      value[i * size + 1] = pickingColor[1];
-      value[i * size + 2] = pickingColor[2];
-    }
-  }
-
-  // DATA ACCESS API
-  // Data can use iterators and may not be random access
-
-  // Use iteration (the only required capability on data) to get first element
-  getFirstObject() {
-    const {data} = this.props;
-    for (const object of data) {
-      return object;
-    }
-    return null;
-  }
-
-  // INTERNAL METHODS
-
-  // Deduces numer of instances. Intention is to support:
-  // - Explicit setting of numInstances
-  // - Auto-deduction for ES6 containers that define a size member
-  // - Auto-deduction for Classic Arrays via the built-in length attribute
-  // - Auto-deduction via arrays
-  getNumInstances(props) {
-    props = props || this.props;
-
-    // First check if the layer has set its own value
-    if (this.state && this.state.numInstances !== undefined) {
-      return this.state.numInstances;
-    }
-
-    // Check if app has provided an explicit value
-    if (props.numInstances !== undefined) {
-      return props.numInstances;
-    }
-
-    // Use container library to get a count for any ES6 container or object
-    const {data} = props;
-    return count(data);
   }
 
   // LAYER MANAGER API
@@ -328,70 +129,35 @@ export default class Layer {
 
   // Called by layer manager when a new layer is found
   /* eslint-disable max-statements */
-  initializeLayer(updateParams) {
-    assert(this.context.gl, 'Layer context missing gl');
+  initializeLayer(params) {
+    if (this.props.useGPU === true) {
+      assert(this.context.gl, 'Layer context missing gl');
+    }
     assert(!this.state, 'Layer missing state');
 
     this.state = {};
 
-    // Initialize state only once
-    this.setState({
-      attributeManager: new AttributeManager({id: this.props.id}),
-      model: null,
-      needsRedraw: true,
-      dataChanged: true
-    });
-
-    // Add attribute manager loggers if provided
-    this.state.attributeManager.setLogFunctions(this.props);
-
-    const {attributeManager} = this.state;
-    // All instanced layers get instancePickingColors attribute by default
-    // Their shaders can use it to render a picking scene
-    // TODO - this slows down non instanced layers
-    attributeManager.addInstanced({
-      instancePickingColors: {
-        type: GL.UNSIGNED_BYTE,
-        size: 3,
-        update: this.calculateInstancePickingColors
-      }
-    });
+    // Storing Geometries
+    this.state.activeCameras = new Map();
+    this.state.id = this.props.id;
+    this.state.hidden = false;
 
     // Call subclass lifecycle methods
-    this.initializeState();
-    this.updateState(updateParams);
+    this.initializeState(params);
     // End subclass lifecycle methods
-
-    // Add any subclass attributes
-    this.updateAttributes(this.props);
-    this._updateBaseUniforms();
-
-    const {model} = this.state;
-    if (model) {
-      model.setInstanceCount(this.getNumInstances());
-      model.id = this.props.id;
-      model.program.id = `${this.props.id}-program`;
-      model.geometry.id = `${this.props.id}-geometry`;
-      model.setAttributes(attributeManager.getAttributes());
-    }
   }
 
   // Called by layer manager when existing layer is getting new props
   updateLayer(updateParams) {
-    // Check for deprecated method
-    if (this.shouldUpdate) {
-      log.once(0, `deck.gl v3 ${this}: "shouldUpdate" deprecated, renamed to "shouldUpdateState"`);
-    }
-
     // Call subclass lifecycle method
-    const stateNeedsUpdate = this.shouldUpdateState(updateParams);
+    const stateNeedsUpdate = this.shouldUpdateState();
     // End lifecycle method
 
     if (stateNeedsUpdate) {
-
       // Call deprecated lifecycle method if defined
       const hasRedefinedMethod = this.willReceiveProps &&
         this.willReceiveProps !== Layer.prototype.willReceiveProps;
+
       if (hasRedefinedMethod) {
         log.once(0, `deck.gl v3 willReceiveProps deprecated. Use updateState in ${this}`);
         const {oldProps, props, changeFlags} = updateParams;
@@ -399,7 +165,7 @@ export default class Layer {
         this.willReceiveProps(oldProps, props, changeFlags);
         this.setState({
           dataChanged: false,
-          viewportChanged: false
+          dataStructureChanged: false
         });
       }
       // End lifecycle method
@@ -407,14 +173,6 @@ export default class Layer {
       // Call subclass lifecycle method
       this.updateState(updateParams);
       // End lifecycle method
-
-      // Run the attribute updaters
-      this.updateAttributes(updateParams.props);
-      this._updateBaseUniforms();
-
-      if (this.state.model) {
-        this.state.model.setInstanceCount(this.getNumInstances());
-      }
     }
   }
   /* eslint-enable max-statements */
@@ -427,20 +185,6 @@ export default class Layer {
     // End lifecycle method
   }
 
-  // Calculates uniforms
-  drawLayer({uniforms = {}}) {
-    // Call subclass lifecycle method
-    this.draw({uniforms});
-    // End lifecycle method
-  }
-
-  // {uniforms = {}, ...opts}
-  pickLayer(opts) {
-    // Call subclass lifecycle method
-    return this.pick(opts);
-    // End lifecycle method
-  }
-
   diffProps(oldProps, newProps, context) {
     // First check if any props have changed (ignore props that will be examined separately)
     const propsChangedReason = compareProps({
@@ -448,14 +192,13 @@ export default class Layer {
       oldProps,
       ignoreProps: {data: null, updateTriggers: null}
     });
+    const propsChanged = Boolean(propsChangedReason);
 
     // Now check if any data related props have changed
     const dataChangedReason = this._diffDataProps(oldProps, newProps);
-
-    const propsChanged = Boolean(propsChangedReason);
-    const dataChanged = Boolean(dataChangedReason);
-    const viewportChanged = context.viewportChanged;
-    const somethingChanged = propsChanged || dataChanged || viewportChanged;
+    // Right now, dataChanged is always true for forced data update
+    // TODO: will implement correct data logic later
+    const dataChanged = true; //Boolean(dataChangedReason);
 
     // Check update triggers to determine if any attributes need regeneration
     // Note - if data has changed, all attributes will need regeneration, so skip this step
@@ -465,33 +208,12 @@ export default class Layer {
       log.log(1, `dataChanged: ${dataChanged}`);
     }
 
-    return {
+    this.changeFlags = {
       propsChanged,
       dataChanged,
-      viewportChanged,
-      somethingChanged,
       reason: dataChangedReason || propsChangedReason
     };
-  }
-
-  // Checks state of attributes and model
-  // TODO - is attribute manager needed? - Model should be enough.
-  getNeedsRedraw({clearRedrawFlags = false} = {}) {
-    // this method may be called by the render loop as soon a the layer
-    // has been created, so guard against uninitialized state
-    if (!this.state) {
-      return false;
-    }
-
-    let redraw = false;
-    redraw = redraw || this.state.needsRedraw;
-    this.state.needsRedraw = this.state.needsRedraw && !clearRedrawFlags;
-
-    const {attributeManager, model} = this.state;
-    redraw = redraw || (attributeManager && attributeManager.getNeedsRedraw({clearRedrawFlags}));
-    redraw = redraw || (model && model.getNeedsRedraw({clearRedrawFlags}));
-
-    return redraw;
+    return;
   }
 
   // PRIVATE METHODS
@@ -554,30 +276,6 @@ export default class Layer {
     if (condition && !condition(value)) {
       throw new Error(`Bad property ${propertyName} in layer ${this}`);
     }
-  }
-
-  _updateBaseUniforms() {
-    this.setUniforms({
-      // apply gamma to opacity to make it visually "linear"
-      opacity: Math.pow(this.props.opacity, 1 / 2.2),
-      ONE: 1.0
-    });
-  }
-
-  // DEPRECATED METHODS
-  // shouldUpdate() {}
-
-  willReceiveProps() {
-  }
-
-  // Updates selected state members and marks the object for redraw
-  setUniforms(uniformMap) {
-    if (this.state.model) {
-      this.state.model.setUniforms(uniformMap);
-    }
-    // TODO - set needsRedraw on the model?
-    this.state.needsRedraw = true;
-    log(3, 'layer.setUniforms', uniformMap);
   }
 }
 

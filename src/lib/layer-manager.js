@@ -108,7 +108,6 @@ export default class LayerManager {
           log.once(0, `Multipe new layers with same id ${layerName(newLayer)}`);
         }
 
-
         // Only transfer state at this stage. We must not generate exceptions
         // until all layers' state have been transferred
         if (oldLayer) {
@@ -121,7 +120,7 @@ export default class LayerManager {
         generatedLayers.push(newLayer);
 
         // Call layer lifecycle method: render sublayers
-        let sublayers = newLayer.renderLayers();
+        let sublayers = newLayer.getSubLayers();
         // End layer lifecycle method: render sublayers
 
         if (sublayers) {
@@ -185,23 +184,22 @@ export default class LayerManager {
           oldProps: {},
           props: layer.props,
           oldContext: this.oldContext,
-          context: this.context,
-          changeFlags: layer.diffProps({}, layer.props, this.context)
+          context: this.context
         });
       } catch (err) {
         log.once(0, `deck.gl error during initialization of ${layerName(layer)} ${err}`, err);
         // Save first error
         error = error || err;
       }
-      // Set back pointer (used in picking)
-      if (layer.state) {
-        layer.state.layer = layer;
-        // Save layer on model for picking purposes
-        // TODO - store on model.userData rather than directly on model
-      }
-      if (layer.state && layer.state.model) {
-        layer.state.model.userData.layer = layer;
-      }
+      // // Set back pointer (used in picking)
+      // if (layer.state) {
+      //   layer.state.layer = layer;
+      //   // Save layer on model for picking purposes
+      //   // TODO - store on model.userData rather than directly on model
+      // }
+      // if (layer.state && layer.state.model) {
+      //   layer.state.model.userData.layer = layer;
+      // }
     }
     return error;
   }
@@ -216,8 +214,7 @@ export default class LayerManager {
           oldProps,
           props,
           context: this.context,
-          oldContext: this.oldContext,
-          changeFlags: layer.diffProps(oldProps, layer.props, this.context)
+          oldContext: this.oldContext
         });
       } catch (err) {
         log.once(0, `deck.gl error during update of ${layerName(layer)}`, err);
@@ -246,6 +243,10 @@ export default class LayerManager {
       log(1, `finalizing ${layerName(layer)}`);
     }
     return error;
+  }
+
+  processPickingAction({ray}) {
+
   }
 }
 

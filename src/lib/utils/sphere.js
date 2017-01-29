@@ -1,4 +1,4 @@
-export default class Sphere {
+export class Sphere {
   constructor({center, radius} = {}) {
     this.center = center;
     this.radius = radius;
