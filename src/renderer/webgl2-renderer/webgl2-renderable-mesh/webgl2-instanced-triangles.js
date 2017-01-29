@@ -1,4 +1,4 @@
-import {WebGL2RenderableMesh} from './webgl2-renderable-mesh';
+import {WebGL2RenderableMesh, VertexAttribute} from './webgl2-renderable-mesh';
 import {GL} from '../../luma.gl2/webgl2';
 
 export default class WebGL2InstancedTriangleMesh extends WebGL2RenderableMesh {
@@ -6,52 +6,51 @@ export default class WebGL2InstancedTriangleMesh extends WebGL2RenderableMesh {
     super({mesh: instancedTriangleMesh, renderer});
 
     this._numberOfPrimitives = instancedTriangleMesh.properties.get('index').hostData.length / 3;
-
     // Additional properties and properties required for instanced drawing
     this._numberOfInstances = instancedTriangleMesh.properties.get('instancedPosition').hostData.length / 3;
 
     // All renderable mesh need to have vertice position, texture coords, vertex color and vertex indices
 
-    this._vertexAttributes.set(
+    this.attributes.set(
       'instancedPosition',
-      {
+      new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
           data: instancedTriangleMesh.properties.get('instancedPosition').hostData,
           size: 3,
           instanced: 1,
-          id: instancedTriangleMesh.id + '_instanced_position'
+          id: `${instancedTriangleMesh.id}.instancedPosition`
         }),
         size: 3,
         instanced: 1
-      }
+      })
     );
 
-    this._vertexAttributes.set(
+    this.attributes.set(
       'instancedColor',
-      {
+      new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
           data: instancedTriangleMesh.properties.get('instancedColor').hostData,
           size: 4,
           instanced: 1,
-          id: instancedTriangleMesh.id + '_instanced_color'
+          id: `${instancedTriangleMesh.id}.instancedColor`
         }),
         size: 4,
         instanced: 1
-      }
+      })
     );
 
-    this._vertexAttributes.set(
+    this.attributes.set(
       'instancedSize',
-      {
+      new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
           data: instancedTriangleMesh.properties.get('instancedSize').hostData,
           size: 1,
           instanced: 1,
-          id: instancedTriangleMesh.id + '_instanced_radius'
+          id: `${instancedTriangleMesh.id}instancedSize`
         }),
         size: 1,
         instanced: 1
-      }
+      })
     );
 
     // Standard instanced drawing shaders

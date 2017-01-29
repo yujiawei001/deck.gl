@@ -49,9 +49,11 @@ export class DeckGLOriginal {
   layersToRender() {
     return this.layerManager.layers;
   }
-  attributesToUpdate() {
-    return;
+
+  propertiesToUpdate() {
+    return this.layerManager.getDirtyProperties();
   }
+
   isDataStructureChanged() {
     return this.dataStructureChanged;
   }

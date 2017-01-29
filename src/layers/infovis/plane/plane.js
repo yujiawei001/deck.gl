@@ -1,4 +1,4 @@
-import {Layer} from '../layer';
+import {Layer} from '../../../lib';
 //import {Triangles} from '../mesh';
 
 export default class Plane extends Layer {

@@ -92,7 +92,7 @@ export default class Layer {
 
   // Let's layer control if updateState should be called
   shouldUpdateState() {
-    return this.changeFlags.somethingChanged;
+    return this.changeFlags.dataChanged || this.changeFlags.dataStructureChanged;
   }
 
   // Default implementation, all attributes will be invalidated and updated

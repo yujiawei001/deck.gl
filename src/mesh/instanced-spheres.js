@@ -1,4 +1,4 @@
-import {Mesh} from './mesh';
+import {Mesh, MeshProperty} from './mesh';
 import {flatten2D} from '../lib/utils/flatten';
 function getMiddlePoint(a, b) {
   const x = (a[0] + b[0]) / 2;
@@ -6,12 +6,11 @@ function getMiddlePoint(a, b) {
   const z = (a[2] + b[2]) / 2;
   const length = Math.sqrt(x * x + y * y + z * z);
 
-  return [x / length, y / length, z /length];
+  return [x / length, y / length, z / length];
 }
 export default class InstancedSpheres extends Mesh {
   constructor({instancedPosition, instancedColor, instancedSize, id, cameraID = 'default-cam', textures = []}) {
-    super({cameraID});
-
+    super({id, cameraID});
     // const t = (1.0 + Math.sqrt(5.0)) / 2.0;
 
     const X = 0.525731112119133606;
@@ -23,7 +22,6 @@ export default class InstancedSpheres extends Mesh {
         [0.0, Z, X], [0.0, Z, -X], [0.0, -Z, X], [0.0, -Z, -X],
         [Z, X, 0.0], [-Z, X, 0.0], [Z, -X, 0.0], [-Z, -X, 0.0]
       ];
-
 
     // 20 triangles, 60 vertex indices
     let icosahedronVertIndex = [
@@ -80,25 +78,12 @@ export default class InstancedSpheres extends Mesh {
     const flattenedTypedIcosahedronVert = new Float32Array(flatten2D(icosahedronVert));
     const flattenedTypedIcosahedronVertIndex = new Uint16Array(flatten2D(icosahedronVertIndex));
 
-    this.properties.set(
-      'position',
-      {hostData: flattenedTypedIcosahedronVert}
-    );
-
-    this.properties.set(
-      'normals',
-      {hostData: flattenedTypedIcosahedronVert}
-    );
-    this.properties.set(
-      'index',
-      {hostData: flattenedTypedIcosahedronVertIndex}
-    );
+    this.properties.get('position').hostData = flattenedTypedIcosahedronVert;
+    this.properties.get('normals').hostData = flattenedTypedIcosahedronVert;
+    this.properties.get('index').hostData = flattenedTypedIcosahedronVertIndex;
 
     // no texture coord for now
-    this.properties.set(
-      'texCoords',
-      {hostData: new Float32Array(icosahedronVert.length * 2)}
-    );
+    this.properties.get('texCoords').hostData = new Float32Array(icosahedronVert.length * 2);
 
     // this is not in use for instanced rendering
     const color = new Float32Array(icosahedronVert.length * 4);
@@ -108,28 +93,23 @@ export default class InstancedSpheres extends Mesh {
       color[i * 4 + 2] = 0.0;
       color[i * 4 + 3] = 1.0;
     }
-
-    this.properties.set(
-      'color',
-      {hostData: color}
-    );
+    this.properties.get('color').hostData = color;
 
     this.properties.set(
       'instancedPosition',
-      {hostData: new Float32Array(flatten2D(instancedPosition))}
+      new MeshProperty({id: 'instancedPosition', hostData: new Float32Array(flatten2D(instancedPosition))})
     );
 
     this.properties.set(
       'instancedColor',
-      {hostData: new Float32Array(flatten2D(instancedColor))}
+      new MeshProperty({id: 'instancedColor', hostData: new Float32Array(flatten2D(instancedColor))})
     );
 
     this.properties.set(
       'instancedSize',
-      {hostData: new Float32Array(flatten2D(instancedSize))}
+      new MeshProperty({id: 'instancedSize', hostData: new Float32Array(flatten2D(instancedSize))})
     );
 
-    this.id = 'instanced_spheres_' + id;
     this.textures = textures;
   }
 }

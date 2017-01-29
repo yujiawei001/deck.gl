@@ -2,7 +2,7 @@ import {Mesh} from './mesh';
 
 export default class Triangles extends Mesh {
   constructor({position, texCoords, color, index, id, cameraID = 'default-cam', textures = []}) {
-    super({cameraID});
+    super({id, cameraID});
     this.properties.set(
       'position',
       {hostData: new Float32Array(position)}
@@ -24,8 +24,6 @@ export default class Triangles extends Mesh {
       {hostData: new Uint16Array(index)}
     );
 
-    this.id = 'triangles_' + id;
     this.textures = textures;
-
   }
 }

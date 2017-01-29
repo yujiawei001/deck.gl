@@ -174,8 +174,8 @@ class Root extends Component {
     // });
 
     const subgraph = graph.generateSubGraph({numHops: 3});
-
     subgraph.setLayout(new GraphLayoutForceDirected({id: 'force-directed', graph: subgraph, dof: 3}));
+    subgraph.startLayout();
 
     this.setState({
       graph: subgraph
@@ -197,11 +197,9 @@ class Root extends Component {
       return null;
     }
 
-    //graph.layoutStep();
-
     const layers = [
       new GraphLayer({
-        id: 'graph-3D',
+        id: 'graph3D',
         data: graph
       })
     ];
@@ -211,6 +209,7 @@ class Root extends Component {
         width={width}
         height={height}
         layers={layers}
+        currentTime={new Date()}
         debug />
     );
   }

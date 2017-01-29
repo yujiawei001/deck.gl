@@ -1,4 +1,4 @@
-import {Layer} from '../layer';
+import {Layer} from '../../../lib';
 //import {Lines} from '../mesh';
 //import {Utils} from '../utils';
 

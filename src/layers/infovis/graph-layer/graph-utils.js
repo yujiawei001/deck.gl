@@ -21,7 +21,10 @@ export class Graph {
     this.isSubGraph = parentGraph ? true : false;
 
     this.layout = null;
-    this.readyForLayout = false;
+    this.layoutRunning = false;
+
+    setInterval(this.layoutStep.bind(this), 100);
+
   }
 
   addNode(node) {
@@ -52,7 +55,21 @@ export class Graph {
   }
 
   layoutStep() {
-    this.layout.step();
+    if (this.layoutRunning) {
+      this.layout.step();
+    }
+  }
+
+  startLayout() {
+    this.layoutRunning = true;
+  }
+
+  pauseLayout() {
+    this.layoutRunning = false;
+  }
+
+  resetLayout() {
+
   }
 
   generateSubGraph({startNodeID, numHops = 3}) {
@@ -109,7 +126,7 @@ export class Graph {
     }
 
     // TODO:
-    // build edgeIndices array for faster force calculations
+    // build edgeNodeIndex array for faster force calculations
 
     for (const edge of this.subGraph.edges.values()) {
       const node0Index = this.subGraph.nodeIndexMap.get(edge.node0.id);
@@ -126,7 +143,6 @@ export class Graph {
     // Process edges
 
     this.subGraph.numberOfEdges = edgeCount;
-    this.subGraph.readyForLayout = true;
     //console.log('subGraph', subGraph);
     return this.subGraph;
   }
@@ -228,6 +244,7 @@ export class GraphLayoutForceDirected extends GraphLayout {
   constructor({id, graph, dof}) {
     super({id, graph});
 
+    this.graph = graph;
     this.numberOfNodes = this.graph.numberOfNodes;
 
     this.startStep = 0;
@@ -396,10 +413,10 @@ export class GraphLayoutForceDirected extends GraphLayout {
   }
 
   _processEdgeInteractions() {
-    for (let i = 0; i < this.edgeIndices.length / 2; i++) {
+    for (let i = 0; i < this.graph.edgeNodeIndex.length / 2; i++) {
       let F0, F1 = 0;
-      const node0Idx = this.edgeIndices[i * 2 + 0];
-      const node1Idx = this.edgeIndices[i * 2 + 1];
+      const node0Idx = this.graph.edgeNodeIndex[i * 2 + 0];
+      const node1Idx = this.graph.edgeNodeIndex[i * 2 + 1];
 
       const dist = this.distance[node0Idx * this.numberOfNodes + node1Idx];
 

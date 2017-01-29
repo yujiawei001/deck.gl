@@ -6,7 +6,6 @@ import {vec3, vec4, mat4} from 'gl-matrix';
 // On screen WebGL renderer
 export class Renderer {
   constructor({controller, canvas, debug, glOptions}) {
-
     this.activated = false;
 
     // if camera/viewport changed
@@ -60,7 +59,7 @@ export class Renderer {
   /* Generating renderable geometry from abstract geometry.
   Renderable geometry doesn't need to match abstract geometry but to
   maximize the rendering performance. */
-  regenerateRenderableMeshes(container) {
+  regenerateRenderableMeshes({container}) {
 
     /* When data structure changed, we need to update the rendering geometries.
     Right now, rendering geometries are regenerated from ground up. This should be
@@ -70,11 +69,25 @@ export class Renderer {
     for (let i = 0; i < layersToRender.length; i++) {
       const meshes = layersToRender[i].state.meshes;
       for (const mesh of meshes.values()) {
-        this.renderableMeshes.set(`${mesh.id}_render`, this.generateRenderableMeshes(mesh));
+        this.renderableMeshes.set(`${mesh.id}.renderer`, this.generateRenderableMeshes(mesh));
       }
     }
+    this.needsRedraw = true;
     //   // Optimizing renderingGeometries
     //   // TODO
+  }
+
+  /* This function will be significantly improved */
+  updateRenderableMeshes({container, propertiesToUpdate}) {
+    for (const entry of propertiesToUpdate) {
+      this.renderableMeshes.get(`${entry.mesh.id}.renderer`).updateAttribute({
+        attributeID: entry.property.id,
+        attributeData: entry.property.hostData
+      });
+    }
+    if (propertiesToUpdate.size !== 0) {
+      this.needsRedraw = true;
+    }
   }
 
   /* Generate renderable mesh from abstract mesh.
@@ -96,23 +109,6 @@ export class Renderer {
   generateRenderableMeshes(mesh) {
   }
 
-  /* This function will be significantly improved */
-  updateRenderableMeshes({container, layerID, groupID, meshID, attributeID}) {
-    // const geometry = this.getRenderableGeometryByID(layerID);
-    // geometry.groups[groupID].meshes[meshID].updateAttribute({
-    //   attributeID,
-    //   mesh: container.getLayer(layerID).geometry.groups[groupID].meshes[meshID]
-    // });
-  }
-
-  getRenderableGeometryByID(ID) {
-    // for (let i = 0; i < this.renderableGeometries.length; i++) {
-    //   if (this.renderableGeometries[i].id === ID) {
-    //     return this.renderableGeometries[i];
-    //   }
-    // }
-    return null;
-  }
   /* Rendering function
   Since most of the work has been done elsewhere. This function should be
   kept very simple. Just iterate through all renderable meshes and call their

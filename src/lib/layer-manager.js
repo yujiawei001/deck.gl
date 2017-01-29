@@ -248,6 +248,20 @@ export default class LayerManager {
   processPickingAction({ray}) {
 
   }
+
+  getDirtyProperties() {
+    const propertiesToUpdate = [];
+    for (const layer of this.layers) {
+      for (const mesh of layer.state.meshes.values()) {
+        for (const property of mesh.properties.values()) {
+          if (property.dirty === true) {
+            propertiesToUpdate.push({mesh, property});
+          }
+        }
+      }
+    }
+    return propertiesToUpdate;
+  }
 }
 
 function layerName(layer) {

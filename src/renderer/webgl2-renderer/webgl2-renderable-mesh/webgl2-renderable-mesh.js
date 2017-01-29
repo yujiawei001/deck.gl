@@ -5,6 +5,13 @@
 This is
 */
 import {GL} from '../../luma.gl2/webgl2';
+export class VertexAttribute {
+  constructor({bufferID, size, target = GL.ARRAY_BUFFER, instanced = 0} = {}) {
+    this.bufferID = bufferID;
+    this.size = size;
+    this.instanced = instanced;
+  }
+}
 
 export class WebGL2RenderableMesh {
   constructor({mesh, renderer}) {
@@ -23,7 +30,7 @@ export class WebGL2RenderableMesh {
     this.textures = new Map();
 
     // We store IDs here because our buffer management is centralized.
-    this._vertexAttributes = new Map();
+    this.attributes = new Map();
 
     // Number of primitives depends on what kind of primitive this mesh holds
     this._numberOfPrimitives = 0;
@@ -42,69 +49,69 @@ export class WebGL2RenderableMesh {
     this._uint32Indices = false;
 
     // All renderable mesh need to have vertice position, texture coords, vertex color and vertex indices
-    this._vertexAttributes.set(
+    this.attributes.set(
       'position',
-      {
+      new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
-          id: mesh.id + '_vertex_position',
+          id: `${mesh.id}.position`,
           data: mesh.properties.get('position').hostData,
           size: 3
         }),
         size: 3,
         instanced: 0
-      }
+      })
     );
 
-    this._vertexAttributes.set(
+    this.attributes.set(
       'normals',
-      {
+      new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
-          id: mesh.id + '_vertex_normal',
+          id: `${mesh.id}.normals`,
           data: mesh.properties.get('normals').hostData,
           size: 3
         }),
         size: 3,
         instanced: 0
-      }
+      })
     );
 
-    this._vertexAttributes.set(
+    this.attributes.set(
       'texCoords',
-      {
+      new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
-          id: mesh.id + '_vertex_tex_coord',
+          id: `${mesh.id}.texCoords`,
           data: mesh.properties.get('texCoords').hostData,
           size: 2
         }),
         size: 2,
         instanced: 0
-      }
+      })
     );
 
-    this._vertexAttributes.set(
+    this.attributes.set(
       'color',
-      {
+      new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
-          id: mesh.id + '_vertex_color',
+          id: `${mesh.id}.color`,
           data: mesh.properties.get('color').hostData,
           size: 4
         }),
         size: 4,
         instanced: 0
-      }
+      })
     )
 
-    this._vertexAttributes.set(
+    this.attributes.set(
       'index',
-      {
+      new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
-          id: mesh.id + '_vertex_index',
+          id: `${mesh.id}.index`,
           data: mesh.properties.get('index').hostData,
-          target: this.renderer.glContext.ELEMENT_ARRAY_BUFFER
+          target: GL.ELEMENT_ARRAY_BUFFER
         }),
         size: 1,
         instanced: 0
-      }
+      })
     );
 
     if (mesh.properties.get('index').hostData instanceof Uint32Array) {
@@ -112,7 +119,7 @@ export class WebGL2RenderableMesh {
       // if(supported === null) {
       //   console.log("OES_element_index_uint not supported. Please check the type of your vertex indices array!!!");
       // } else {
-        this._uint32Indices = true;
+      this._uint32Indices = true;
       // }
     }
 
@@ -121,7 +128,7 @@ export class WebGL2RenderableMesh {
       initialColor[i * 4 + 0] = i / initialColor.length * 4 * 255;
       initialColor[i * 4 + 1] = i / initialColor.length * 4 * 255;
       initialColor[i * 4 + 2] = i / initialColor.length * 4 * 255;
-      initialColor[i * 4 + 3] = 255
+      initialColor[i * 4 + 3] = 255;
     }
 
     for (let i = 0; i < mesh.textures.length; i++) {
@@ -134,13 +141,12 @@ export class WebGL2RenderableMesh {
         })
       });
     }
-
  }
 
   // Convenient function for communicating with resource managers
   getBufferByID(id) {
-    if (this._vertexAttributes.get(id) !== undefined) {
-      return this.renderer.bufferManager.getBufferByID(this._vertexAttributes.get(id).bufferID);
+    if (this.attributes.get(id) !== undefined) {
+      return this.renderer.bufferManager.getBufferByID(this.attributes.get(id).bufferID);
     }
     return undefined;
   }
@@ -192,19 +198,19 @@ export class WebGL2RenderableMesh {
     // this.lightLocations[17] = 0.0;
 
     this.getProgramByID(this._programID).setUniforms({
-      lightDirection: this.lightLocations,
+      lightDirection: this.lightLocations
     });
     const buffers = {};
-    for (const [key, value] of this._vertexAttributes) {
+    for (const key of this.attributes.keys()) {
       buffers[key] = this.getBufferByID(key);
     }
     this.getProgramByID(this._programID).setBuffers(buffers);
 
   }
 
-  updateAttribute({attributeID, mesh}) {
+  updateAttribute({attributeID, attributeData}) {
     const buffer = this.getBufferByID(attributeID);
-    buffer.setData({data: mesh.properties.get(attributeID).hostData, size: this._vertexAttributes.get(attributeID).size, target: GL.ARRAY_BUFFER, instanced: this._vertexAttributes.get(attributeID).instanced});
+    buffer.setData({data: attributeData, size: this.attributes.get(attributeID).size, target: GL.ARRAY_BUFFER, instanced: this.attributes.get(attributeID).instanced});
   }
 
 }

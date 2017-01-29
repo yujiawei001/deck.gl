@@ -30,7 +30,7 @@ export default class GraphLayer extends Layer {
 
   updateState({oldProps, props}) {
 
-    if (changeFlags.dataChanged) {
+    if (this.changeFlags.dataChanged) {
       // for (const {meshID, propertyID} of props.updateTriggers) {
       this._updateMeshes({});
       // }
@@ -44,34 +44,34 @@ export default class GraphLayer extends Layer {
       instancedPosition: this.props.data.getNodePosition(),
       instancedColor: this.props.data.getNodeColor(),
       instancedSize: this.props.data.getNodeSize(),
-      id: `${this.props.id}_nodes`,
+      id: `${this.id}.nodes`,
       cameraID: this.props.cameraID
     });
 
-    meshes.set(`${this.props.id}_nodes`, nodes);
+    meshes.set(`${this.id}.nodes`, nodes);
 
     const edges = new Lines({
       position: this.props.data.getNodePosition(),
       color: this.props.data.getNodeColor(),
       index: this.props.data.getEdgeNodeIndex(),
-      id: `${this.props.id}_edges`,
+      id: `${this.id}.edges`,
       cameraID: this.props.cameraID
     });
 
-    meshes.set(`${this.props.id}_edges`, edges);
+    meshes.set(`${this.props.id}.edges`, edges);
 
     return meshes;
   }
 
   _updateMeshes({meshID, propertyID}) {
-    this.state.meshes.get(`${this.props.id}_nodes`).updateProperty({
+    this.state.meshes.get(`${this.id}.nodes`).updateProperty({
       propertyID: 'instancedPosition',
-      data: this.props.graph.getNodePosition()
+      data: this.props.data.getNodePosition()
     });
 
-    this.state.meshes.get(`${this.props.id}_edges`).updateProperty({
+    this.state.meshes.get(`${this.id}.edges`).updateProperty({
       propertyID: 'position',
-      data: this.props.graph.getNodePosition()
+      data: this.props.data.getNodePosition()
     });
   }
 }
