@@ -31,16 +31,17 @@ import Layer from './layer';
 import {log} from './utils';
 import assert from 'assert';
 
-export default class LayerManager {
-  constructor() {
+export class LayerManager {
+  constructor({controller}) {
     this.prevLayers = [];
     this.layers = [];
+    // context is deprecated and can be removed
     this.context = {};
+    this.controller = controller;
     Object.seal(this.context);
   }
 
-  updateLayers({newLayers}) {
-
+  updateLayers(newLayers) {
     // Filter out any null layers
     newLayers = newLayers.filter(newLayer => newLayer !== null);
 
@@ -60,6 +61,54 @@ export default class LayerManager {
       throw error;
     }
     return this;
+  }
+
+  isDataChanged() {
+    let changed = false;
+
+    // Ask each layer that under its control if their data has changed
+    for (const layer of this.layers) {
+      changed = changed || layer.isDataChanged();
+    }
+    return changed;
+  }
+
+  processPickingAction({ray}) {
+    for (const layer of this.layers) {
+      if (layer.props.pickable === true) {
+        const result = layer.pickingWithRay({ray});
+        this.controller.processPickingResult({
+          layer,
+          result
+        });
+      }
+    }
+  }
+
+  propertiesToUpdate() {
+    const propertiesToUpdate = [];
+    for (const layer of this.layers) {
+      for (const mesh of layer.state.meshes.values()) {
+        for (const property of mesh.properties.values()) {
+          if (property.dirty === true) {
+            propertiesToUpdate.push({mesh, property});
+          }
+        }
+      }
+    }
+    return propertiesToUpdate;
+  }
+
+  meshesToGenerate() {
+    const meshesToGenerate = [];
+    for (const layer of this.layers) {
+      for (const mesh of layer.state.meshes.values()) {
+        if (mesh.generated === false) {
+          meshesToGenerate.push(mesh);
+        }
+      }
+    }
+    return meshesToGenerate;
   }
 
   // PRIVATE METHODS
@@ -243,32 +292,6 @@ export default class LayerManager {
       log(1, `finalizing ${layerName(layer)}`);
     }
     return error;
-  }
-
-  processPickingAction({ray}) {
-    for (const layer of this.layers) {
-      if (layer.props.pickable === true) {
-        const result = layer.pickingWithRay({ray});
-        this.controller.processPickingResult({
-          layer: layer,
-          result: result
-        });
-      }
-    }
-  }
-
-  getDirtyProperties() {
-    const propertiesToUpdate = [];
-    for (const layer of this.layers) {
-      for (const mesh of layer.state.meshes.values()) {
-        for (const property of mesh.properties.values()) {
-          if (property.dirty === true) {
-            propertiesToUpdate.push({mesh, property});
-          }
-        }
-      }
-    }
-    return propertiesToUpdate;
   }
 }
 

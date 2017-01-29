@@ -191,6 +191,10 @@ class Root extends Component {
     });
   }
 
+  _onElementPicked(result) {
+    console.log('in Root._onElementPicked(), picking result: ', result);
+  }
+
   render() {
     const {width, height, graph} = this.state;
     if (width <= 0 || height <= 0 || !graph) {
@@ -215,6 +219,7 @@ class Root extends Component {
         height={height}
         layers={layers}
         currentTime={new Date()}
+        onElementPicked={this._onElementPicked.bind(this)}
         debug />
     );
   }

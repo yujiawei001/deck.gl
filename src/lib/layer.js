@@ -64,9 +64,8 @@ export default class Layer {
     this.changeFlags = {
       propsChanged: false,
       dataChanged: false,
-      dataStructureChanged: false,
       reason: undefined
-    }
+    };
     this.state = null;
     this.context = null;
     this.count = counter++;
@@ -92,18 +91,12 @@ export default class Layer {
   // Default implementation, all attributes will be invalidated and updated
   // when data changes
   updateState({oldProps, props, oldContext, context, changeFlags}) {
-    if (this.changeFlags.dataChanged) {
-    }
+
+    // TODO: default implementation
   }
 
   pickingWithRay({ray}) {
   }
-
-  // Let's layer control if updateState should be called
-  shouldUpdateState() {
-    return this.changeFlags.dataChanged || this.changeFlags.dataStructureChanged;
-  }
-
 
   // Called once when layer is no longer matched and state will be discarded
   // App can destroy WebGL resources here
@@ -119,9 +112,11 @@ export default class Layer {
   // END LIFECYCLE METHODS
   // //////////////////////////////////////////////////
 
-
   // Public API
 
+  isDataChanged() {
+    return this.changeFlags.dataChanged;
+  }
   // Updates selected state members and marks the object for redraw
   setState(updateObject) {
     Object.assign(this.state, updateObject);
@@ -155,31 +150,10 @@ export default class Layer {
     this.diffProps(updateParams);
 
     // Call subclass lifecycle method
-    const stateNeedsUpdate = this.shouldUpdateState();
+    this.updateState(updateParams);
     // End lifecycle method
-
-    if (stateNeedsUpdate) {
-      // Call deprecated lifecycle method if defined
-      const hasRedefinedMethod = this.willReceiveProps &&
-        this.willReceiveProps !== Layer.prototype.willReceiveProps;
-
-      if (hasRedefinedMethod) {
-        log.once(0, `deck.gl v3 willReceiveProps deprecated. Use updateState in ${this}`);
-        const {oldProps, props, changeFlags} = updateParams;
-        this.setState(changeFlags);
-        this.willReceiveProps(oldProps, props, changeFlags);
-        this.setState({
-          dataChanged: false,
-          dataStructureChanged: false
-        });
-      }
-      // End lifecycle method
-
-      // Call subclass lifecycle method
-      this.updateState(updateParams);
-      // End lifecycle method
-    }
   }
+
   /* eslint-enable max-statements */
 
   // Called by manager when layer is about to be disposed

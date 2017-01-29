@@ -1,7 +1,7 @@
 import React, {PropTypes, createElement} from 'react';
 
 import {WebGLRenderer, WebGL2Renderer} from '../renderer';
-import {DeckGLOriginal} from './deckgl-original';
+import {LayerManager} from '../lib/layer-manager';
 import {EventManager} from '../event';
 // import Axes from '../layers/infovis/axes';
 // import Plane from '../layers/infovis/plane';
@@ -57,7 +57,7 @@ export default class DeckGL extends React.Component {
       break;
     }
 
-    this.container = new DeckGLOriginal({controller: this});
+    this.container = new LayerManager({controller: this});
 
     this.eventManager = new EventManager({controller: this, canvas: this.canvas});
 
@@ -170,7 +170,7 @@ export default class DeckGL extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    this.updateLayers(nextProps);
+    this.updateProps(nextProps);
   }
 
   _animationLoop() {
@@ -208,29 +208,20 @@ export default class DeckGL extends React.Component {
 
   propsChangedUpdate() {
     /* layer comparison. */
-    this.allLayers = this.internalLayers.concat(this.props.layers);
-
-    this.container.processLayers({layers: this.allLayers});
-
-    if (this.container.dataStructureChanged) {
-      this.renderer.regenerateRenderableMeshes({
-        container: this.container
-      });
+    this.container.updateLayers(this.props.layers);
+    const newMeshes = this.container.meshesToGenerate();
+    if (newMeshes.length > 0) {
+      this.renderer.regenerateRenderableMeshes({meshes: newMeshes});
       this.renderer.activated = true;
-      this.container.dataStructureChanged = false;
     }
 
-    if (this.container.dataChanged) {
-      this.renderer.updateRenderableMeshes({
-        container: this.container,
-        attributesToUpdate: this.container.propertiesToUpdate()
-      });
-    }
+    const properties = this.container.propertiesToUpdate();
+    this.renderer.updateRenderableMeshes({attributes: properties});
 
     this.propsChanged = false;
   }
 
-  updateLayers(props) {
+  updateProps(props) {
     // If props have changed after last animation loop
     this.propsChangedUpdate(props);
 
@@ -238,29 +229,8 @@ export default class DeckGL extends React.Component {
     this.animationLoopUpdate();
   }
 
-  // updateRenderableGeometries({layerID, groupID, meshID, propertyID}) {
-  //   this.renderer.updateRenderableGeometries({
-  //     container: this.container,
-  //     layerID,
-  //     groupID,
-  //     meshID,
-  //     attributeID: propertyID
-  //   });
-  //   this.renderer.needsRedraw = true;
-  // }
-
   processPickingResult({layer, result}) {
-    // if (layer instanceof TSNEScatterplot3D) {
-    //   if (result !== undefined) {
-    //     this.setTextureData({
-    //       id: 'digit',
-    //       data: result.data.image
-    //     });
-    //   }
-    // } else if (layer instanceof Graph3D) {
-    // this.props.onElementPicked(result);
-    // }
-    console.log('picking result: ', result);
+    this.props.onElementPicked(result);
   }
 
   setTextureData({id, data}) {

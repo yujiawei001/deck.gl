@@ -59,18 +59,16 @@ export class Renderer {
   /* Generating renderable geometry from abstract geometry.
   Renderable geometry doesn't need to match abstract geometry but to
   maximize the rendering performance. */
-  regenerateRenderableMeshes({container}) {
+  regenerateRenderableMeshes({meshes}) {
 
     /* When data structure changed, we need to update the rendering geometries.
     Right now, rendering geometries are regenerated from ground up. This should be
     optimized to regenerating only the change part of the whole scene tree.
     Major optimization could happen here */
-    const layersToRender = container.layersToRender();
-    for (let i = 0; i < layersToRender.length; i++) {
-      const meshes = layersToRender[i].state.meshes;
-      for (const mesh of meshes.values()) {
-        this.renderableMeshes.set(`${mesh.id}.renderer`, this.generateRenderableMeshes(mesh));
-      }
+    for (const entry of meshes) {
+      this.renderableMeshes.set(`${entry.id}.renderer`, this.generateRenderableMeshes(entry));
+      // Clear the flag
+      entry.generated = true;
     }
     this.needsRedraw = true;
     //   // Optimizing renderingGeometries
@@ -78,14 +76,16 @@ export class Renderer {
   }
 
   /* This function will be significantly improved */
-  updateRenderableMeshes({container, attributesToUpdate}) {
-    for (const entry of attributesToUpdate) {
+  updateRenderableMeshes({attributes}) {
+    for (const entry of attributes) {
       this.renderableMeshes.get(`${entry.mesh.id}.renderer`).updateAttribute({
         attributeID: entry.property.id,
         attributeData: entry.property.hostData
       });
+      // Clear the dirty flag
+      entry.property.dirty = false;
     }
-    if (attributesToUpdate.size !== 0) {
+    if (attributes.size !== 0) {
       this.needsRedraw = true;
     }
   }
@@ -129,7 +129,7 @@ export class Renderer {
     }
 
     this.renderCameraTargetsToScreen();
-    console.log("Draw completed. Frame No. ", this.frameNo);
+    //console.log("Draw completed. Frame No. ", this.frameNo);
 
     this.needsRedraw = false;
     this.frameNo++;

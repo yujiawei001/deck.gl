@@ -37,10 +37,9 @@ export default class GraphLayer extends Layer {
     something better than the current updateTrigger.
     */
     if (this.changeFlags.dataChanged) {
-      // for (const {meshID, propertyID} of props.updateTriggers) {
+      // We need to some how
       this._updateMeshes({});
       this.changeFlags.dataChanged = false;
-      // }
     }
   }
 
@@ -49,12 +48,12 @@ export default class GraphLayer extends Layer {
 
     const sphere = new Sphere();
     let minT = Infinity;
-    let minIndex = this.numberNodes;
+    let minIndex = data.numberOfNodes;
 
     const position = getPosition();
     const size = getSize();
 
-    for (let i = 0; i < this.numberNodes; i++) {
+    for (let i = 0; i < data.numberOfNodes; i++) {
       sphere.center = position[i];
       sphere.radius = size[i] * 2;
       const t = Intersect.rayWithSphere({ray, sphere});
@@ -64,15 +63,9 @@ export default class GraphLayer extends Layer {
       }
     }
 
-    if (minIndex < this.numberNodes) {
+    if (minIndex < data.numberOfNodes) {
       // notify the container that data has changed
 
-      // for (let i = 0; i < this.data[minIndex].length; i++) {
-      //   this.textureData[i * 4 + 0] = this.data[minIndex][i];
-      //   this.textureData[i * 4 + 1] = this.data[minIndex][i];
-      //   this.textureData[i * 4 + 2] = this.data[minIndex][i];
-      //   this.textureData[i * 4 + 3] = 255;
-      // }
       position[minIndex][2] = -20.0;
 
       this.state.meshes.get(`${this.id}.nodes`).updateProperty({
@@ -83,7 +76,7 @@ export default class GraphLayer extends Layer {
       const pickingResult = {
         data: {
           index: minIndex,
-          node: data.nodes.get(data.nodeIDMap.get(minIndex)),
+          node: data.nodeMap.get(minIndex),
           nodeLayout: position[minIndex]
         }
       };

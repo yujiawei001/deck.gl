@@ -34,6 +34,8 @@ export class Mesh {
     this.properties.set('normals', new MeshProperty({id: 'normals'}));
 
     this.textures = [];
+
+    this.generated = false;
   }
 
   updateProperty({propertyID, data}) {
