@@ -23,7 +23,10 @@ export class Graph {
     this.layout = null;
     this.layoutRunning = false;
 
-    setInterval(this.layoutStep.bind(this), 100);
+    this.dataStructureChanged = false;
+    this.dataChanged = false;
+
+    setInterval(this.layoutStep.bind(this), 16);
 
   }
 
@@ -31,6 +34,7 @@ export class Graph {
     if (!this.nodes.has(node.id)) {
       this.nodes.set(node.id, node);
       this.numberOfNodes++;
+      this.dataStructureChanged = true;
     }
   }
 
@@ -38,6 +42,7 @@ export class Graph {
     if (!this.edges.has(edge.id)) {
       this.edges.set(edge.id, edge);
       this.numberOfEdges++;
+      this.dataStructureChanged = true;
     }
   }
 
@@ -57,6 +62,7 @@ export class Graph {
   layoutStep() {
     if (this.layoutRunning) {
       this.layout.step();
+      this.dataChanged = true;
     }
   }
 
@@ -70,6 +76,14 @@ export class Graph {
 
   resetLayout() {
 
+  }
+
+  isDataChanged() {
+    return this.isDataChanged;
+  }
+
+  isDataStructureChanged() {
+    return this.isDataStructureChanged;
   }
 
   generateSubGraph({startNodeID, numHops = 3}) {

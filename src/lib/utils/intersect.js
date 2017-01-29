@@ -1,7 +1,7 @@
 // import {Ray, Sphere} from '../../utils';
 // import {vec3} from 'gl-matrix';
 
-export default class Intersect {
+export class Intersect {
   constructor() {
   }
 

@@ -173,7 +173,7 @@ class Root extends Component {
     //   numHops: 6
     // });
 
-    const subgraph = graph.generateSubGraph({numHops: 3});
+    const subgraph = graph.generateSubGraph({numHops: 4});
     subgraph.setLayout(new GraphLayoutForceDirected({id: 'force-directed', graph: subgraph, dof: 3}));
     subgraph.startLayout();
 
@@ -200,7 +200,12 @@ class Root extends Component {
     const layers = [
       new GraphLayer({
         id: 'graph3D',
-        data: graph
+        data: graph,
+        pickable: true,
+        getPosition: graph.getNodePosition.bind(graph),
+        getColor: graph.getNodeColor.bind(graph),
+        getSize: graph.getNodeSize.bind(graph),
+        getEdgeNodeIndex: graph.getEdgeNodeIndex.bind(graph)
       })
     ];
 

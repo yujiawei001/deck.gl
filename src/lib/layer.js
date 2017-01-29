@@ -63,7 +63,7 @@ export default class Layer {
     this.oldProps = null;
     this.changeFlags = {
       propsChanged: false,
-      dataChanged: true,
+      dataChanged: false,
       dataStructureChanged: false,
       reason: undefined
     }
@@ -89,19 +89,21 @@ export default class Layer {
   initializeState() {
     throw new Error(`Layer ${this} has not defined initializeState`);
   }
+  // Default implementation, all attributes will be invalidated and updated
+  // when data changes
+  updateState({oldProps, props, oldContext, context, changeFlags}) {
+    if (this.changeFlags.dataChanged) {
+    }
+  }
+
+  pickingWithRay({ray}) {
+  }
 
   // Let's layer control if updateState should be called
   shouldUpdateState() {
     return this.changeFlags.dataChanged || this.changeFlags.dataStructureChanged;
   }
 
-  // Default implementation, all attributes will be invalidated and updated
-  // when data changes
-  updateState({oldProps, props, oldContext, context, changeFlags}) {
-    if (this.changeFlags.dataChanged) {
-      this.invalidateAttribute('all');
-    }
-  }
 
   // Called once when layer is no longer matched and state will be discarded
   // App can destroy WebGL resources here
@@ -116,6 +118,7 @@ export default class Layer {
 
   // END LIFECYCLE METHODS
   // //////////////////////////////////////////////////
+
 
   // Public API
 
@@ -149,6 +152,8 @@ export default class Layer {
 
   // Called by layer manager when existing layer is getting new props
   updateLayer(updateParams) {
+    this.diffProps(updateParams);
+
     // Call subclass lifecycle method
     const stateNeedsUpdate = this.shouldUpdateState();
     // End lifecycle method
@@ -185,7 +190,9 @@ export default class Layer {
     // End lifecycle method
   }
 
-  diffProps(oldProps, newProps, context) {
+  diffProps(updateParams) {
+    const oldProps = updateParams.oldProps;
+    const newProps = updateParams.props;
     // First check if any props have changed (ignore props that will be examined separately)
     const propsChangedReason = compareProps({
       newProps,
@@ -198,7 +205,7 @@ export default class Layer {
     const dataChangedReason = this._diffDataProps(oldProps, newProps);
     // Right now, dataChanged is always true for forced data update
     // TODO: will implement correct data logic later
-    const dataChanged = true; //Boolean(dataChangedReason);
+    const dataChanged = Boolean(dataChangedReason);
 
     // Check update triggers to determine if any attributes need regeneration
     // Note - if data has changed, all attributes will need regeneration, so skip this step
@@ -223,6 +230,7 @@ export default class Layer {
   _diffDataProps(oldProps, newProps) {
     // Support optional app defined comparison of data
     const {dataComparator} = newProps;
+    // Support data container self-report data changes
     if (dataComparator) {
       if (!dataComparator(newProps.data, oldProps.data)) {
         return 'Data comparator detected a change';
@@ -230,6 +238,8 @@ export default class Layer {
     // Otherwise, do a shallow equal on props
     } else if (newProps.data !== oldProps.data) {
       return 'A new data container was supplied';
+    } else if (newProps.data.isDataChanged !== undefined && newProps.data.isDataChanged()) {
+      return 'Data container report data changed from internal sources';
     }
 
     return null;
@@ -254,11 +264,11 @@ export default class Layer {
       if (diffReason) {
         if (propName === 'all') {
           log.log(1, `updateTriggers invalidating all attributes: ${diffReason}`);
-          this.invalidateAttribute('all');
+          // this.invalidateAttribute('all');
           change = true;
         } else {
           log.log(1, `updateTriggers invalidating attribute ${propName}: ${diffReason}`);
-          this.invalidateAttribute(propName);
+          // this.invalidateAttribute(propName);
           change = true;
         }
       }

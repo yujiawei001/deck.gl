@@ -78,14 +78,14 @@ export class Renderer {
   }
 
   /* This function will be significantly improved */
-  updateRenderableMeshes({container, propertiesToUpdate}) {
-    for (const entry of propertiesToUpdate) {
+  updateRenderableMeshes({container, attributesToUpdate}) {
+    for (const entry of attributesToUpdate) {
       this.renderableMeshes.get(`${entry.mesh.id}.renderer`).updateAttribute({
         attributeID: entry.property.id,
         attributeData: entry.property.hostData
       });
     }
-    if (propertiesToUpdate.size !== 0) {
+    if (attributesToUpdate.size !== 0) {
       this.needsRedraw = true;
     }
   }

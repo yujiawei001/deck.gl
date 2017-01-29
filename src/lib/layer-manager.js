@@ -246,7 +246,15 @@ export default class LayerManager {
   }
 
   processPickingAction({ray}) {
-
+    for (const layer of this.layers) {
+      if (layer.props.pickable === true) {
+        const result = layer.pickingWithRay({ray});
+        this.controller.processPickingResult({
+          layer: layer,
+          result: result
+        });
+      }
+    }
   }
 
   getDirtyProperties() {

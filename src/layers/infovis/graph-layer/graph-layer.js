@@ -19,31 +19,87 @@
 // THE SOFTWARE.
 import {Layer} from '../../../lib';
 import {InstancedSpheres, Lines} from '../../../mesh';
+import {Sphere} from '../../../lib/utils/sphere';
+import {Intersect} from '../../../lib/utils/intersect';
+
 export default class GraphLayer extends Layer {
 
   initializeState({props}) {
     this.state = {
       meshes: this._generateMeshes()
     };
-    console.log('initializeState props', props);
   }
 
   updateState({oldProps, props}) {
-
+    /*
+    Requiring the user to identify which mesh/property needs to be updated
+    at every data change is unreasonable for composite layers. We need
+    something better than the current updateTrigger.
+    */
     if (this.changeFlags.dataChanged) {
       // for (const {meshID, propertyID} of props.updateTriggers) {
       this._updateMeshes({});
+      this.changeFlags.dataChanged = false;
       // }
     }
-    console.log('updateState props', props);
+  }
+
+  pickingWithRay({ray}) {
+    const {getPosition, getSize, data} = this.props;
+
+    const sphere = new Sphere();
+    let minT = Infinity;
+    let minIndex = this.numberNodes;
+
+    const position = getPosition();
+    const size = getSize();
+
+    for (let i = 0; i < this.numberNodes; i++) {
+      sphere.center = position[i];
+      sphere.radius = size[i] * 2;
+      const t = Intersect.rayWithSphere({ray, sphere});
+      if (t < minT) {
+        minT = t;
+        minIndex = i;
+      }
+    }
+
+    if (minIndex < this.numberNodes) {
+      // notify the container that data has changed
+
+      // for (let i = 0; i < this.data[minIndex].length; i++) {
+      //   this.textureData[i * 4 + 0] = this.data[minIndex][i];
+      //   this.textureData[i * 4 + 1] = this.data[minIndex][i];
+      //   this.textureData[i * 4 + 2] = this.data[minIndex][i];
+      //   this.textureData[i * 4 + 3] = 255;
+      // }
+      position[minIndex][2] = -20.0;
+
+      this.state.meshes.get(`${this.id}.nodes`).updateProperty({
+        propertyID: 'instancedPosition',
+        data: position
+      });
+
+      const pickingResult = {
+        data: {
+          index: minIndex,
+          node: data.nodes.get(data.nodeIDMap.get(minIndex)),
+          nodeLayout: position[minIndex]
+        }
+      };
+      return pickingResult;
+    }
+
+    return undefined;
   }
 
   _generateMeshes() {
+    const {getPosition, getColor, getSize, getEdgeNodeIndex} = this.props;
     const meshes = new Map();
     const nodes = new InstancedSpheres({
-      instancedPosition: this.props.data.getNodePosition(),
-      instancedColor: this.props.data.getNodeColor(),
-      instancedSize: this.props.data.getNodeSize(),
+      instancedPosition: getPosition(),
+      instancedColor: getColor(),
+      instancedSize: getSize(),
       id: `${this.id}.nodes`,
       cameraID: this.props.cameraID
     });
@@ -51,9 +107,9 @@ export default class GraphLayer extends Layer {
     meshes.set(`${this.id}.nodes`, nodes);
 
     const edges = new Lines({
-      position: this.props.data.getNodePosition(),
-      color: this.props.data.getNodeColor(),
-      index: this.props.data.getEdgeNodeIndex(),
+      position: getPosition(),
+      color: getColor(),
+      index: getEdgeNodeIndex(),
       id: `${this.id}.edges`,
       cameraID: this.props.cameraID
     });
@@ -64,14 +120,16 @@ export default class GraphLayer extends Layer {
   }
 
   _updateMeshes({meshID, propertyID}) {
+    const {getPosition} = this.props;
+
     this.state.meshes.get(`${this.id}.nodes`).updateProperty({
       propertyID: 'instancedPosition',
-      data: this.props.data.getNodePosition()
+      data: getPosition()
     });
 
     this.state.meshes.get(`${this.id}.edges`).updateProperty({
       propertyID: 'position',
-      data: this.props.data.getNodePosition()
+      data: getPosition()
     });
   }
 }
