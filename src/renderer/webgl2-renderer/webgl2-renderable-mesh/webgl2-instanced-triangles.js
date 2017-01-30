@@ -1,7 +1,9 @@
-import {WebGL2RenderableMesh, VertexAttribute} from './webgl2-renderable-mesh';
+import {WebGL2RenderableMesh} from './webgl2-renderable-mesh';
+import {VertexAttribute} from '../../renderable-mesh';
+
 import {GL} from '../../luma.gl2/webgl2';
 
-export default class WebGL2InstancedTriangleMesh extends WebGL2RenderableMesh {
+export default class WebGL2InstancedTriangle extends WebGL2RenderableMesh {
   constructor({instancedTriangleMesh, renderer}) {
     super({mesh: instancedTriangleMesh, renderer});
 
@@ -100,8 +102,14 @@ export default class WebGL2InstancedTriangleMesh extends WebGL2RenderableMesh {
   render(cameraUniforms) {
     super.render(cameraUniforms);
 
-    this.renderer.glContext.drawElementsInstanced(
-      GL.TRIANGLES, this._numberOfPrimitives * 3, GL.UNSIGNED_SHORT, 0, this._numberOfInstances
-      );
+    if (this._uint32Indices === true) {
+      this.renderer.glContext.drawElementsInstanced(
+        GL.TRIANGLES, this._numberOfPrimitives * 3, GL.UNSIGNED_INT, 0, this._numberOfInstances
+        );
+    } else {
+      this.renderer.glContext.drawElementsInstanced(
+        GL.TRIANGLES, this._numberOfPrimitives * 3, GL.UNSIGNED_SHORT, 0, this._numberOfInstances
+        );
+    }
   }
 }

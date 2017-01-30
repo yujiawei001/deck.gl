@@ -29,27 +29,21 @@ export class CameraManager {
     this.activeCameraID = 'default-cam';
   }
 
-  newCamera({id = 'default-cam', pos, aim, up, fovY, aspect, near, far, type, targetID, corner = 'bottom-left', controlType = 'fixed'}) {
+  newCamera({id = 'default-cam', type, params = {}, targetID, corner = 'bottom-left', controlType = 'standard-2d'}) {
     const camera = new Camera({
       id,
-      pos,
-      aim,
-      up,
-      fovY,
-      aspect,
-      near,
-      far,
-      type: 'perspective'
+      params,
+      type
     });
 
     const cameraTarget = this.createCameraTarget({
-      id: id + '_target',
+      id: `${id}.target`,
       targetID,
       corner
     });
 
     const cameraControl = this.createCameraControl({
-      id: id + '_control',
+      id: `${id}.control`,
       manager: this,
       type: controlType,
       camera

@@ -6,9 +6,8 @@ import {ProgramManager} from '../program-manager';
 import {TextureManager} from '../texture-manager';
 
 import {Triangles, Lines, InstancedSpheres, InstancedTriangleMesh} from '../../mesh';
-import {WebGL2Triangles, WebGL2Lines, WebGL2InstancedTriangleMesh} from './webgl2-renderable-mesh';
+import {WebGL2Triangles, WebGL2Lines, WebGL2InstancedTriangle} from './webgl2-renderable-mesh';
 
-import {GL} from '../luma.gl2/webgl2';
 import {createGLContext} from 'luma.gl';
 
 // On screen WebGL2 renderer
@@ -82,12 +81,12 @@ export default class WebGL2Renderer extends Renderer {
         renderer: this
       });
     } else if (mesh instanceof InstancedSpheres) {
-      currentRenderableMesh = new WebGL2InstancedTriangleMesh({
+      currentRenderableMesh = new WebGL2InstancedTriangle({
         instancedTriangleMesh: mesh,
         renderer: this
       });
     } else if (mesh instanceof InstancedTriangleMesh) {
-      currentRenderableMesh = new WebGL2InstancedTriangleMesh({
+      currentRenderableMesh = new WebGL2InstancedTriangle({
         instancedTriangleMesh: mesh,
         renderer: this
       });

@@ -57,7 +57,7 @@ export default class WebGL2Triangles extends WebGL2RenderableMesh {
     });
 
     if (this.textures.size !== 0) {
-      // hard coded
+      // TODO: hard coded
       const tex = this.renderer.textureManager.getTexture('digit');
       this.getProgramByID(this._programID).setUniforms({
         uSampler: tex

@@ -26,30 +26,29 @@ export class Renderer {
     this.dpr = controller.dpr;
   }
 
-  newPerspectiveCamera({id = 'default-cam', pos, aim, up, fovY, near, far, texture = false, width = this.currentCanvas.width, height = this.currentCanvas.height, corner, controlType}) {
-    const aspect = width / height;
+  newCamera({
+    id = 'default-cam',
+    type = 'perspective',
+    params = {},
+    targetParams = {},
+    controlType = 'target'
+  }) {
 
-    let framebufferID = null;
-
-    if (texture === true) {
+    let framebufferID;
+    if (targetParams.renderToTexture === true) {
       framebufferID = this.framebufferManager.newFramebuffer({
-        id: id + '_target_texture',
-        width,
-        height
+        id: `${id}.targetTexture`,
+        width: targetParams.width,
+        height: targetParams.height
       });
     }
 
     this.cameraManager.newCamera({
       id,
-      pos,
-      aim,
-      up,
-      fovY,
-      aspect,
-      near,
-      far,
+      type,
+      params,
       targetID: framebufferID,
-      corner,
+      corner: targetParams.corner,
       controlType
     });
 

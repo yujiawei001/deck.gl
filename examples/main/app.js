@@ -1,7 +1,6 @@
 /* global window, document */
 import 'babel-polyfill';
 
-import {ReflectionEffect} from 'deck.gl/experimental';
 import DeckGL, {autobind} from 'deck.gl/react';
 
 import {Matrix4} from 'luma.gl';
@@ -44,8 +43,6 @@ class App extends PureComponent {
         rotationX: 0
       }
     };
-
-    this._effects = [new ReflectionEffect()];
   }
 
   componentWillMount() {
@@ -90,11 +87,6 @@ class App extends PureComponent {
       ...settings
     };
     this.setState({activeExamples});
-  }
-
-  _onWebGLInitialized(gl) {
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
   }
 
   _onUpdateContainerSettings(settings) {
@@ -169,9 +161,7 @@ class App extends PureComponent {
           id="default-deckgl-overlay"
           width={width} height={height}
           {...mapViewState}
-          onWebGLInitialized={ this._onWebGLInitialized }
           layers={this._renderExamples()}
-          effects={effects ? this._effects : []}
         />
 
         <FPSStats isActive/>

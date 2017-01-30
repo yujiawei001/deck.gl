@@ -13,7 +13,6 @@ export default class DeckGL extends React.Component {
     this.state = {
       width: props.width,
       height: props.height,
-      threeD: props.threeD
     };
 
     this.startTime = new Date();
@@ -58,110 +57,50 @@ export default class DeckGL extends React.Component {
     }
 
     this.container = new LayerManager({controller: this});
-
     this.eventManager = new EventManager({controller: this, canvas: this.canvas});
 
-    // // These are all "layers"
-    // // These two are opaque layers
+    /*  TODO: Make internal layers work.
+    Internal layers are "non-react" so it's not compatible
+    with current layer diffing algorithms
+    */
+
     // const axes = new Axes();
     // this.container.addLayers(axes);
 
-    // const planeXY = new Plane({
-    //   data: [-1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1, 0],
-    //   id: 'planeXY',
-    //   cameraID: 'axis-cam'
-    // });
+    const cameraID = 'default-cam';
+    /* camera parameters
+    These parameters are for perspective cameras */
+    const params = {
+      pos: [0.0, 0.0, -100],
+      aim: [0.0, 0.0, 0.0],
+      up: [0.0, -1.0, 0.0],
+      fovY: 45 / 180 * Math.PI,
+      near: 1,
+      far: 1e4,
+      aspect: this.canvas.width / this.canvas.height
+    };
 
-    // this.internalLayers.push(planeXY);
+    const targetParams = {
+      /* render to texture for screen composition or not */
+      renderToTexture: true,
+      /* render target texture size. only effective when the previous is set to true */
+      width: this.canvas.width,
+      height: this.canvas.height,
+      /* at which corner this texture will be put to the final screen
+      TODO: signicantly improve the final screen
+      composition mechanism*/
+      corner: 'bottom-left'
+    };
 
-    // const planeYZ = new Plane({
-    //   data: [0, -1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1],
-    //   id: 'planeYZ',
-    //   cameraID: 'axis-cam'
-    // });
+    this.renderer.newCamera({
+      id: cameraID,
+      cameraControlType: 'standard-2d',
+      type: 'perspective',
+      params,
+      targetParams
+    });
 
-    // this.internalLayers.push(planeYZ);
-
-    // const planeXZ = new Plane({
-    //   data: [-1, 0, -1, 1, 0, -1, -1, 0, 1, 1, 0, 1],
-    //   id: 'planeXZ',
-    //   cameraID: 'axis-cam'
-    // });
-
-    // this.internalLayers.push(planeXZ);
-
-    // const digitBoard = new Plane({
-    //   data: [-1, -1, -0.1, 1, -1, -0.1, -1, 1, -0.1, 1, 1, -0.1],
-    //   id: 'digitBoard',
-    //   cameraID: 'digit-cam',
-    //   textures: [{id: 'digit', width: 28, height: 28}]
-    // });
-    // this.internalLayers.push(digitBoard);
-
-    let cameraID = 'default-cam';
-
-    if (this.props.threeD) {
-      this.renderer.newPerspectiveCamera({
-        id: cameraID,
-        pos: [0.0, 0.0, -50],
-        aim: [0.0, 0.0, 0.0],
-        up: [0.0, -1.0, 0.0],
-        fovY: 45 / 180 * Math.PI,
-        near: 1,
-        far: 1e4,
-        texture: true,
-        controlType: 'target'
-      });
-
-      this.cameras.add(cameraID);
-
-      cameraID = 'axis-cam';
-      this.renderer.newPerspectiveCamera({
-        id: cameraID,
-        pos: [0.0, 0.0, -6],
-        aim: [0.0, 0.0, 0.0],
-        up: [0.0, -1.0, 0.0],
-        fovY: 45 / 180 * Math.PI,
-        near: 0.1,
-        far: 1000.0,
-        texture: true,
-        width: 256,
-        height: 256,
-        controlType: 'arc-rotate'
-      });
-      this.cameras.add(cameraID);
-
-      cameraID = 'digit-cam';
-      this.renderer.newPerspectiveCamera({
-        id: cameraID,
-        pos: [0.0, 0.0, -2],
-        aim: [0.0, 0.0, 0.0],
-        up: [0.0, -1.0, 0.0],
-        fovY: 45 / 180 * Math.PI,
-        near: 0.1,
-        far: 1000.0,
-        texture: true,
-        corner: 'top-left', // this is a heck
-        width: 256,
-        height: 256
-      });
-      this.cameras.add(cameraID);
-
-    } else {
-      this.renderer.newPerspectiveCamera({
-        id: cameraID,
-        pos: [0.0, 0.0, -100],
-        aim: [0.0, 0.0, 0.0],
-        up: [0.0, -1.0, 0.0],
-        fovY: 45 / 180 * Math.PI,
-        near: 1,
-        far: 1e4,
-        texture: true,
-        controlType: 'standard-2d'
-      });
-
-      this.cameras.add(cameraID);
-    }
+    this.cameras.add(cameraID);
 
     // Initial set up of the animation loop
     if (typeof window !== 'undefined') {

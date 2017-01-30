@@ -1,7 +1,9 @@
 import {WebGLRenderableMesh} from './webgl-renderable-mesh';
+import {VertexAttribute} from '../../renderable-mesh';
+
 import {GL} from '../../luma.gl2/webgl2';
 
-export default class WebGLInstancedTriangleMesh extends WebGLRenderableMesh {
+export default class WebGL2InstancedTriangle extends WebGLRenderableMesh {
   constructor({instancedTriangleMesh, renderer}) {
     super({mesh: instancedTriangleMesh, renderer});
 
@@ -12,46 +14,46 @@ export default class WebGLInstancedTriangleMesh extends WebGLRenderableMesh {
 
     // All renderable mesh need to have vertice position, texture coords, vertex color and vertex indices
 
-    this._vertexAttributes.set(
+    this.attributes.set(
       'instancedPosition',
-      {
+      new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
           data: instancedTriangleMesh.properties.get('instancedPosition').hostData,
           size: 3,
           instanced: 1,
-          id: instancedTriangleMesh.id + '_instanced_position'
+          id: `${instancedTriangleMesh.id}.instancedPosition`
         }),
         size: 3,
         instanced: 1
-      }
+      })
     );
 
-    this._vertexAttributes.set(
+    this.attributes.set(
       'instancedColor',
-      {
+      new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
           data: instancedTriangleMesh.properties.get('instancedColor').hostData,
           size: 4,
           instanced: 1,
-          id: instancedTriangleMesh.id + '_instanced_color'
+          id: `${instancedTriangleMesh.id}.instancedColor`
         }),
         size: 4,
         instanced: 1
-      }
+      })
     );
 
-    this._vertexAttributes.set(
-      'instancedRadius',
-      {
+    this.attributes.set(
+      'instancedSize',
+      new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
-          data: instancedTriangleMesh.properties.get('instancedRadius').hostData,
+          data: instancedTriangleMesh.properties.get('instancedSize').hostData,
           size: 1,
           instanced: 1,
-          id: instancedTriangleMesh.id + '_instanced_radius'
+          id: `${instancedTriangleMesh.id}instancedSize`
         }),
         size: 1,
         instanced: 1
-      }
+      })
     );
 
     // Standard instanced drawing shaders
@@ -63,7 +65,7 @@ export default class WebGLInstancedTriangleMesh extends WebGLRenderableMesh {
 
     attribute vec3 instancedPosition;
     attribute vec4 instancedColor;
-    attribute float instancedRadius;
+    attribute float instancedSize;
 
     uniform mat4 modelMatrix;
     uniform mat4 viewMatrix;
@@ -76,7 +78,7 @@ export default class WebGLInstancedTriangleMesh extends WebGLRenderableMesh {
 
 
     void main(void) {
-      vec4 position_world_vec4 = modelMatrix * vec4((position * instancedRadius + instancedPosition), 1.0);
+      vec4 position_world_vec4 = modelMatrix * vec4((position * instancedSize + instancedPosition), 1.0);
       vec4 position_clipspace = viewProjectionMatrix * position_world_vec4;
 
       vColor = instancedColor;
@@ -141,24 +143,9 @@ export default class WebGLInstancedTriangleMesh extends WebGLRenderableMesh {
 
   render(cameraUniforms) {
     super.render(cameraUniforms);
-    // Non-instanced attribute has to be set before instanced attribute for it to work
-    // this.getProgramByID(this._programID).setBuffers({
-    //   normals: buffer4
-    // });
-
-    // Additional properties (instance drawing related)
-    /* because setBuffers are separated into two calls between super class's render()
-    and sub class's render(), luma.gl will complain that some properties are not supplied
-    in the first setBuffers() call. But the rendering works fine */
-    // this.getProgramByID(this._programID).setBuffers({
-    //   instancedPosition: this.getBufferByID('instancedPosition'),
-    //   instancedColor: this.getBufferByID('instancedColor'),
-    //   instancedRadius: this.getBufferByID('instancedRadius')
-    // });
-
-    // console.log("camera pos", cameraUniforms.cameraPosition);
 
     const instancedDrawingExtension = this.renderer.glContext.getExtension('ANGLE_instanced_arrays');
+
     if (this._uint32Indices === true) {
       instancedDrawingExtension.drawElementsInstancedANGLE(
         GL.TRIANGLES, this._numberOfPrimitives * 3, this.renderer.glContext.UNSIGNED_INT, 0, this._numberOfInstances

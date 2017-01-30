@@ -26,8 +26,10 @@ Camera is renderer specific. Camera object should
 also indicating what target it wish to draw on
 */
 export default class Camera {
-  constructor({pos, aim, up, fovY, aspect, near, far, type, id}) {
+  constructor({id, params, type}) {
     this.id = id;
+    const {pos, aim, up, fovY, aspect, near, far} = params;
+
     this.pos = vec3.fromValues(pos[0], pos[1], pos[2]);
     this.aim = vec3.fromValues(aim[0], aim[1], aim[2]);
     this.up = vec3.fromValues(up[0], up[1], up[2]);
@@ -40,17 +42,18 @@ export default class Camera {
     this.cameraUniforms = new CameraUniforms();
     this.transformMatricesUpdated = false;
 
-    let viewMatrix = mat4.create();
-    let projectionMatrix = mat4.create();
-    let viewProjectionMatrix = mat4.create();
+    const viewMatrix = mat4.create();
+    const projectionMatrix = mat4.create();
+    const viewProjectionMatrix = mat4.create();
 
     this.direction = vec3.create();
     this.left = vec3.create();
     this.rotation = vec3.create();
 
     mat4.lookAt(viewMatrix, pos, aim, up);
-    if (type === "perspective") {
-      mat4.perspective(projectionMatrix, fovY, aspect, near, far)
+    // TODO: support other camera type
+    if (type === 'perspective') {
+      mat4.perspective(projectionMatrix, fovY, aspect, near, far);
     }
 
     mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
@@ -118,10 +121,10 @@ export default class Camera {
   }
 
   getRotation() {
-    let camMatrix = mat4.create();
+    const camMatrix = mat4.create();
     mat4.invert(camMatrix, this.cameraUniforms.viewMatrix);
     this.rotation[0] = Math.atan(this.camMatrix[6] / this.camMatrix[10]);
-    let direction = getDirection();
+    const direction = this.getDirection();
     if (direction[0] >= 0) {
       this.rotation[1] = -(Math.atan(direction[2] / direction[0]) + Math.PI / 2.0);
     } else {
@@ -149,13 +152,16 @@ export default class Camera {
     return vec3.scaleAndAdd(vec3.create(), this.pos, direction, distance);
   }
 
-
   getTransformMatrices() {
     if (this.transformMatricesUpdated === true) {
       return this.cameraUniforms;
     }
     mat4.lookAt(this.cameraUniforms.viewMatrix, this.pos, this.aim, this.up);
-    mat4.multiply(this.cameraUniforms.viewProjectionMatrix, this.cameraUniforms.projectionMatrix, this.cameraUniforms.viewMatrix);
+    mat4.multiply(
+      this.cameraUniforms.viewProjectionMatrix,
+      this.cameraUniforms.projectionMatrix,
+      this.cameraUniforms.viewMatrix
+    );
     this.cameraUniforms.cameraPosition = this.getPos();
     return this.cameraUniforms;
   }
