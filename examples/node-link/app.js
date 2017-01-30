@@ -207,10 +207,11 @@ class Root extends Component {
         id: 'graph3D',
         data: graph,
         pickable: true,
-        getPosition: graph.getNodePosition.bind(graph),
-        getColor: graph.getNodeColor.bind(graph),
-        getSize: graph.getNodeSize.bind(graph),
-        getEdgeNodeIndex: graph.getEdgeNodeIndex.bind(graph)
+        getNodePosition: graph.getNodePosition.bind(graph),
+        getNodeColor: graph.getNodeColor.bind(graph),
+        getNodeSize: graph.getNodeSize.bind(graph),
+        getEdgePosition: graph.getEdgePosition.bind(graph),
+        getEdgeColor: graph.getEdgeColor.bind(graph)
       })
     ];
 

@@ -159,19 +159,20 @@ export class Graph {
           item.distance = current.distance + 1;
           queue.push(item);
         }
+
+        /* TODO: edges in subGraph.edges contains node with distance = numHops + 1.
+        We should fix this... */
+
         const edge = this._getEdgeIDFromNodes(this.edges, current, item);
 
         if(edge && !this.subGraph.edgeIndexMap.has(edge.id)) {
           this.subGraph.edgeIndexMap.set(edge.id, edgeCount);
           this.subGraph.edgeIDMap.set(edgeCount, edge.id);
           this.subGraph.edges.set(edge.id, edge);
-
-          edgeCount++;
         }
       }
     }
 
-    // TODO:
     // build edgeNodeIndex array for faster force calculations
 
     for (const edge of this.subGraph.edges.values()) {
@@ -180,9 +181,9 @@ export class Graph {
       if (node0Index !== undefined && node1Index !== undefined) {
         this.subGraph.edgeNodeIndex.push(node0Index);
         this.subGraph.edgeNodeIndex.push(node1Index);
+        edgeCount++;
       }
     }
-
 
     this.subGraph.numberOfNodes = nodeCount;
 
@@ -216,7 +217,6 @@ export class Graph {
   getEdgeNodeIndex() {
     return this.edgeNodeIndex;
   }
-
 
   _getEdgeIDFromNodes(edges, node1, node2) {
     if (edges.has(`${node1.id}_${node2.id}`)) {

@@ -44,14 +44,14 @@ export default class GraphLayer extends Layer {
   }
 
   pickingWithRay({ray}) {
-    const {getPosition, getSize, data} = this.props;
+    const {getNodePosition, getNodeSize, data} = this.props;
 
     const sphere = new Sphere();
     let minT = Infinity;
     let minIndex = data.numberOfNodes;
 
-    const position = getPosition();
-    const size = getSize();
+    const position = getNodePosition();
+    const size = getNodeSize();
 
     for (let i = 0; i < data.numberOfNodes; i++) {
       sphere.center = position[i];
@@ -87,12 +87,12 @@ export default class GraphLayer extends Layer {
   }
 
   _generateMeshes() {
-    const {getPosition, getColor, getSize, getEdgeNodeIndex} = this.props;
+    const {getNodePosition, getNodeColor, getNodeSize, getEdgePosition, getEdgeColor} = this.props;
     const meshes = new Map();
     const nodes = new InstancedSpheres({
-      instancedPosition: getPosition(),
-      instancedColor: getColor(),
-      instancedSize: getSize(),
+      instancedPosition: getNodePosition(),
+      instancedColor: getNodeColor(),
+      instancedSize: getNodeSize(),
       id: `${this.id}.nodes`,
       cameraID: this.props.cameraID
     });
@@ -100,9 +100,8 @@ export default class GraphLayer extends Layer {
     meshes.set(`${this.id}.nodes`, nodes);
 
     const edges = new Lines({
-      position: getPosition(),
-      color: getColor(),
-      index: getEdgeNodeIndex(),
+      position: getEdgePosition(),
+      color: getEdgeColor(),
       id: `${this.id}.edges`,
       cameraID: this.props.cameraID
     });
@@ -113,16 +112,16 @@ export default class GraphLayer extends Layer {
   }
 
   _updateMeshes({meshID, propertyID}) {
-    const {getPosition} = this.props;
+    const {getNodePosition, getEdgePosition} = this.props;
 
     this.state.meshes.get(`${this.id}.nodes`).updateProperty({
       propertyID: 'instancedPosition',
-      data: getPosition()
+      data: getNodePosition()
     });
 
     this.state.meshes.get(`${this.id}.edges`).updateProperty({
       propertyID: 'position',
-      data: getPosition()
+      data: getEdgePosition()
     });
   }
 }

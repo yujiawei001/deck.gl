@@ -25,7 +25,9 @@ export class GraphLayoutForceDirected extends GraphLayout {
     super({id, graph});
 
     this.graph = graph;
+
     this.numberOfNodes = this.graph.numberOfNodes;
+    this.numberOfEdges = this.graph.numberOfEdges;
 
     this.startStep = 0;
     this.currentStep = 0;
@@ -46,7 +48,8 @@ export class GraphLayoutForceDirected extends GraphLayout {
     this.color = new Array(this.numberOfNodes);
     this.size = new Array(this.numberOfNodes);
     this.mass = new Array(this.numberOfNodes);
-    this.edgePosition = new Array(this.numberOfEdges);
+    this.edgePosition = new Array(this.numberOfEdges * 2);
+    this.edgeColor = new Array(this.numberOfEdges * 2);
 
     for (const [index, node] of this.graph.nodeMap) {
       this.position[index] = this._initializeNodePosition(node, index);
@@ -96,6 +99,15 @@ export class GraphLayoutForceDirected extends GraphLayout {
       }
     }
 
+    for (let i = 0; i < this.numberOfEdges; i++) {
+      const node0Idx = this.graph.edgeNodeIndex[i * 2 + 0];
+      const node1Idx = this.graph.edgeNodeIndex[i * 2 + 1];
+      this.edgePosition[i * 2 + 0] = this.position[node0Idx];
+      this.edgePosition[i * 2 + 1] = this.position[node1Idx];
+      this.edgeColor[i * 2 + 0] = this.color[node0Idx];
+      this.edgeColor[i * 2 + 1] = this.color[node1Idx];
+    }
+
     this.currentStep++;
   }
 
@@ -113,6 +125,10 @@ export class GraphLayoutForceDirected extends GraphLayout {
 
   getEdgePosition() {
     return this.edgePosition;
+  }
+
+  getEdgeColor() {
+    return this.edgeColor;
   }
 
   _L2(a, b) {
@@ -193,7 +209,7 @@ export class GraphLayoutForceDirected extends GraphLayout {
   }
 
   _processEdgeInteractions() {
-    for (let i = 0; i < this.graph.edgeNodeIndex.length / 2; i++) {
+    for (let i = 0; i < this.numberOfEdges; i++) {
       let F0, F1 = 0;
       const node0Idx = this.graph.edgeNodeIndex[i * 2 + 0];
       const node1Idx = this.graph.edgeNodeIndex[i * 2 + 1];
