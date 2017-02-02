@@ -3,7 +3,7 @@ import {VertexAttribute} from '../../renderable-mesh';
 
 import {GL} from '../../luma.gl2/webgl2';
 
-export default class WebGL2InstancedTriangle extends WebGLRenderableMesh {
+export default class WebGLInstancedTriangle extends WebGLRenderableMesh {
   constructor({instancedTriangleMesh, renderer}) {
     super({mesh: instancedTriangleMesh, renderer});
 

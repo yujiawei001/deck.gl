@@ -5,7 +5,7 @@ import {FramebufferManager} from '../framebuffer-manager';
 import {ProgramManager} from '../program-manager';
 import {TextureManager} from '../texture-manager';
 
-import {Triangles, Lines, InstancedSpheres, InstancedTriangleMesh} from '../../mesh';
+import {Triangles, Lines, InstancedSpheres, InstancedCircles, InstancedTriangleMesh} from '../../mesh';
 import {WebGL2Triangles, WebGL2Lines, WebGL2InstancedTriangle} from './webgl2-renderable-mesh';
 
 import {createGLContext} from 'luma.gl';
@@ -80,12 +80,9 @@ export default class WebGL2Renderer extends Renderer {
         lines: mesh,
         renderer: this
       });
-    } else if (mesh instanceof InstancedSpheres) {
-      currentRenderableMesh = new WebGL2InstancedTriangle({
-        instancedTriangleMesh: mesh,
-        renderer: this
-      });
-    } else if (mesh instanceof InstancedTriangleMesh) {
+    } else if (mesh instanceof InstancedSpheres ||
+      mesh instanceof InstancedCircles ||
+      mesh instanceof InstancedTriangleMesh) {
       currentRenderableMesh = new WebGL2InstancedTriangle({
         instancedTriangleMesh: mesh,
         renderer: this

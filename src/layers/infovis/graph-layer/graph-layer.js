@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 import {Layer} from '../../../lib';
-import {InstancedSpheres, Lines} from '../../../mesh';
+import {InstancedSpheres, InstancedCircles, Lines} from '../../../mesh';
 import {Sphere} from '../../../lib/utils/sphere';
 import {Intersect} from '../../../lib/utils/intersect';
 
@@ -89,7 +89,7 @@ export default class GraphLayer extends Layer {
   _generateMeshes() {
     const {getNodePosition, getNodeColor, getNodeSize, getEdgePosition, getEdgeColor} = this.props;
     const meshes = new Map();
-    const nodes = new InstancedSpheres({
+    const nodes = new InstancedCircles({
       instancedPosition: getNodePosition(),
       instancedColor: getNodeColor(),
       instancedSize: getNodeSize(),

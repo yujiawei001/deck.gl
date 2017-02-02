@@ -12,7 +12,7 @@ export default class DeckGL extends React.Component {
 
     this.state = {
       width: props.width,
-      height: props.height,
+      height: props.height
     };
 
     this.startTime = new Date();
@@ -94,7 +94,7 @@ export default class DeckGL extends React.Component {
 
     this.renderer.newCamera({
       id: cameraID,
-      cameraControlType: 'standard-2d',
+      controlType: 'standard-2d',
       type: 'perspective',
       params,
       targetParams
