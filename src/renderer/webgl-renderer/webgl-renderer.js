@@ -58,28 +58,33 @@ export default class WebGLRenderer extends Renderer {
   renderable match */
 
   generateRenderableMeshes(mesh) {
-
     let currentRenderableMesh;
-    if (mesh instanceof Triangles) {
+
+    switch (mesh.constructor) {
+    case Triangles:
       currentRenderableMesh = new WebGLTriangles({
         triangles: mesh,
         renderer: this
       });
-    } else if (mesh instanceof Lines) {
+      break;
+    case Lines:
       currentRenderableMesh = new WebGLLines({
         lines: mesh,
         renderer: this
       });
-    } else if (mesh instanceof InstancedSpheres ||
-      mesh instanceof InstancedCircles ||
-      mesh instanceof InstancedTriangleMesh) {
+      break;
+    case InstancedSpheres:
+    case InstancedCircles:
+    case InstancedTriangleMesh:
       currentRenderableMesh = new WebGLInstancedTriangle({
         instancedTriangleMesh: mesh,
         renderer: this
       });
-    } else {
-      console.log('WebGLRenderer.generateRenderableMeshes(). Unknown type of mesh!')
+      break;
+    default:
+      console.log('WebGL2Renderer.generateRenderableMeshes(). Unknown type of mesh!');
     }
+
     return currentRenderableMesh;
   }
 }
