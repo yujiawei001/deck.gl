@@ -11,7 +11,7 @@ export default class Lines extends Mesh {
     this.properties.get('color').hostData = new Float32Array(flatten2D(color));
 
     // if index is not provided, it means the user is expecting a non-indexed call.
-    // right now, a pseudo-index array is generated to make the renderer
+    // right now, a pseudo-index array is generated to make the renderer simpler
     if (index === undefined) {
       const indexSequence = new Uint32Array(vertices.length);
       for (let i = 0; i < indexSequence.length; i++) {
