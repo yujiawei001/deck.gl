@@ -17,21 +17,21 @@ export class MeshProperty {
 }
 export class Mesh {
   constructor({id, cameraID}) {
-    // this.vertices = null;
-    // this.texCoords = null;
-    // this.color = null;
-    // this.index = null;
-    // this.normals = null;
     this.modelMatrix = mat4.create();
     this.id = id;
     this.cameraID = cameraID;
     this.properties = new Map();
 
-    this.properties.set('position', new MeshProperty({id: 'position'}));
+    // Per vertex
+    this.properties.set('vertices', new MeshProperty({id: 'vertices'}));
     this.properties.set('texCoords', new MeshProperty({id: 'texCoords'}));
-    this.properties.set('color', new MeshProperty({id: 'color'}));
     this.properties.set('index', new MeshProperty({id: 'index'}));
     this.properties.set('normals', new MeshProperty({id: 'normals'}));
+
+    // Per instance
+    this.properties.set('position', new MeshProperty({id: 'position'}));
+    this.properties.set('color', new MeshProperty({id: 'color'}));
+    this.properties.set('size', new MeshProperty({id: 'size'}));
 
     this.textures = [];
 

@@ -9,8 +9,6 @@ class Action {
     this.standard2DCameraRatio = 1.0;
     this.AxisCameraRatio = 1.0;
   }
-
-
 }
 
 export default class EventManager {

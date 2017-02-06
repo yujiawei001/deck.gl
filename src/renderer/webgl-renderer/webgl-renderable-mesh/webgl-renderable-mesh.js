@@ -1,5 +1,5 @@
 // All RenderableMesh objects know how to render itself
-/* TODO: complete all WebGL primitives: WebGLTriangles, WebGLLines, WebGLPoints, WebGLInstancedTriangles */
+/* TODO: complete all WebGL primitives: WebGLTriangles, WebGLLines, WebGLPoints, WebGLTriangless */
 
 import {RenderableMesh} from '../../renderable-mesh';
 

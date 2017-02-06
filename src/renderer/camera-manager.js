@@ -96,10 +96,10 @@ export class CameraManager {
       }
 
       vertexAttributes.set(
-        'position',
+        'vertices',
         {
           bufferID: this.renderer.bufferManager.newBuffer({
-            id: id + '_vertex_position',
+            id: `${id}.vertices`,
             data: new Float32Array([origin[0], origin[1], 0, origin[0] + 2 * w, origin[1], 0, origin[0], origin[1] + 2 * h, 0, origin[0] + 2 * w, origin[1] + 2 * h, 0]),
             size: 3
           }),
@@ -112,7 +112,7 @@ export class CameraManager {
         'texCoords',
         {
           bufferID: this.renderer.bufferManager.newBuffer({
-            id: id + '_tex_coord',
+            id: `${id}.texCoords`,
             data: new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]),
             size: 2
           }),
@@ -125,7 +125,7 @@ export class CameraManager {
         'index',
         {
           bufferID: this.renderer.bufferManager.newBuffer({
-            id: id + '_vertex_index',
+            id: `${id}.index`,
             data: new Uint16Array([0, 2, 1, 2, 3, 1]),
             size: 2,
             target: this.renderer.glContext.ELEMENT_ARRAY_BUFFER

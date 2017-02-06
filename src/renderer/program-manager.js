@@ -21,7 +21,7 @@ export class ProgramManager {
 
 
     const vsDefault = `\
-    attribute vec3 position;
+    attribute vec3 vertices;
     attribute vec3 normals;
     attribute vec4 color;
     attribute vec2 texCoords;
@@ -33,7 +33,7 @@ export class ProgramManager {
     varying vec2 vTexCoords;
 
     void main(void) {
-      vec4 position_clipspace = viewProjectionMatrix * modelMatrix * vec4(position, 1.0);
+      vec4 position_clipspace = viewProjectionMatrix * modelMatrix * vec4(vertices, 1.0);
       vColor = color;
       vTexCoords = texCoords;
       gl_Position = position_clipspace;
@@ -65,14 +65,14 @@ export class ProgramManager {
     this.defaultProgram = defaultProgram;
 
     const vsScreenQuad = `\
-    attribute vec3 position;
+    attribute vec3 vertices;
     attribute vec2 texCoords;
     uniform float zDepth;
     varying vec2 vTexCoords;
 
     void main(void) {
       vTexCoords = texCoords;
-      gl_Position = vec4(position.x, position.y, zDepth, 1.0);
+      gl_Position = vec4(vertices.x, vertices.y, zDepth, 1.0);
     }
     `;
 

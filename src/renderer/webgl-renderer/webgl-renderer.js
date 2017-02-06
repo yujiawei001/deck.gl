@@ -5,8 +5,8 @@ import {FramebufferManager} from '../framebuffer-manager';
 import {ProgramManager} from '../program-manager';
 import {TextureManager} from '../texture-manager';
 
-import {Triangles, Lines, InstancedSpheres, InstancedTriangleMesh, InstancedCircles} from '../../mesh';
-import {WebGLTriangles, WebGLLines, WebGLInstancedTriangle} from './webgl-renderable-mesh';
+import {Lines, Spheres, TriangleMesh, Circles} from '../../mesh';
+import {WebGLTriangles, WebGLLines} from './webgl-renderable-mesh';
 
 import {createGLContext} from 'luma.gl';
 
@@ -61,7 +61,9 @@ export default class WebGLRenderer extends Renderer {
     let currentRenderableMesh;
 
     switch (mesh.constructor) {
-    case Triangles:
+    case Spheres:
+    case Circles:
+    case TriangleMesh:
       currentRenderableMesh = new WebGLTriangles({
         triangles: mesh,
         renderer: this
@@ -70,14 +72,6 @@ export default class WebGLRenderer extends Renderer {
     case Lines:
       currentRenderableMesh = new WebGLLines({
         lines: mesh,
-        renderer: this
-      });
-      break;
-    case InstancedSpheres:
-    case InstancedCircles:
-    case InstancedTriangleMesh:
-      currentRenderableMesh = new WebGLInstancedTriangle({
-        instancedTriangleMesh: mesh,
         renderer: this
       });
       break;

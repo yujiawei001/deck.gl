@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 import {Layer} from '../../../lib';
-import {InstancedSpheres, Lines} from '../../../mesh';
+import {Spheres, Lines} from '../../../mesh';
 export default class GraphLayer extends Layer {
 
   initializeState({props}) {
@@ -35,10 +35,10 @@ export default class GraphLayer extends Layer {
 
   _generateMeshes() {
     const meshes = new Map();
-    const nodes = new InstancedSpheres({
-      instancedPosition: this.props.data.getNodePosition(),
-      instancedColor: this.props.data.getNodeColor(),
-      instancedSize: this.props.data.getNodeSize(),
+    const nodes = new Spheres({
+      position: this.props.data.getNodePosition(),
+      color: this.props.data.getNodeColor(),
+      size: this.props.data.getNodeSize(),
       id: `${this.id}.nodes`,
       cameraID: this.props.cameraID
     });
@@ -60,7 +60,7 @@ export default class GraphLayer extends Layer {
 
   _updateMeshes({meshID, propertyID}) {
     this.state.meshes.get(`${this.id}.nodes`).updateProperty({
-      propertyID: 'instancedPosition',
+      propertyID: 'position',
       data: this.props.data.getNodePosition()
     });
 

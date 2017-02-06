@@ -26,8 +26,11 @@ export class RenderableMesh {
     // We store IDs here because our buffer management is centralized.
     this.attributes = new Map();
 
-    // Number of primitives depends on what kind of primitive this mesh holds
+    // Number of primitives depends on the kind of primitive this mesh holds
     this._numberOfPrimitives = 0;
+
+    // Number of instances
+    this._numberOfInstances = 0;
 
     // Model matrix for moving the mesh easier
     // Mesh space stuff, such as rotation, scaling probably will happen here
@@ -41,11 +44,11 @@ export class RenderableMesh {
 
     // All renderable mesh need to have vertice position, texture coords, vertex color and vertex indices
     this.attributes.set(
-      'position',
+      'vertices',
       new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
-          id: `${mesh.id}.position`,
-          data: mesh.properties.get('position').hostData,
+          id: `${mesh.id}.vertices`,
+          data: mesh.properties.get('vertices').hostData,
           size: 3
         }),
         size: 3,
@@ -75,19 +78,6 @@ export class RenderableMesh {
           size: 2
         }),
         size: 2,
-        instanced: 0
-      })
-    );
-
-    this.attributes.set(
-      'color',
-      new VertexAttribute({
-        bufferID: this.renderer.bufferManager.newBuffer({
-          id: `${mesh.id}.color`,
-          data: mesh.properties.get('color').hostData,
-          size: 4
-        }),
-        size: 4,
         instanced: 0
       })
     );

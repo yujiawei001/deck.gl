@@ -1,5 +1,5 @@
 import {Layer} from '../../../lib';
-//import {Triangles} from '../mesh';
+//import {TriangleMesh} from '../mesh';
 
 export default class Plane extends Layer {
   // constructor({data, id = '', cameraID = 'default', textures = []}) {
@@ -17,7 +17,7 @@ export default class Plane extends Layer {
   // }
 
   // generateGeometry() {
-  //   const quad = new Triangles({
+  //   const quad = new TriangleMesh({
   //     position: this.data,
   //     texCoords: this.geometry.texCoords,
   //     color: this.geometry.color,

@@ -143,7 +143,7 @@ export class Renderer {
     let renderOrder = 0;
     for (const cameraID of this.cameraManager.cameras.keys()) {
       // Get current camera and set appropriate framebuffer
-      const buffer0 = this.cameraManager.getBuffer(cameraID, 'position');
+      const buffer0 = this.cameraManager.getBuffer(cameraID, 'vertices');
       const buffer1 = this.cameraManager.getBuffer(cameraID, 'texCoords');
       const buffer2 = this.cameraManager.getBuffer(cameraID, 'index');
       const tex = this.cameraManager.getTargetTexture(cameraID);
@@ -151,7 +151,7 @@ export class Renderer {
       /* left hand coord is used for NDC space */
 
       screenQuadProgram.setBuffers({
-        position: buffer0,
+        vertices: buffer0,
         texCoords: buffer1,
         index: buffer2
       });

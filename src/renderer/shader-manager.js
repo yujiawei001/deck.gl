@@ -4,6 +4,7 @@ import {Shader} from './luma.gl2/shader';
 export class ShaderManager {
   constructor(renderer) {
     this.renderer = renderer;
-    this.shaders = [];
+    this.shaders = {};
+
   }
 }

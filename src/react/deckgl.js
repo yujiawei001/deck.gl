@@ -41,7 +41,7 @@ export default class DeckGL extends React.Component {
 
     const debug = false;
     const glOptions = null;
-    const rendererType = 'WebGL2';
+    const rendererType = 'WebGL';
 
     // Before creating the WebGL renderer, a canvas should be ready
     switch (rendererType) {

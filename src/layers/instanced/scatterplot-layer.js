@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 import {InstancedLayer} from 'instanced-layer';
-import {InstancedCircles} from '../../../mesh';
+import {Circles} from '../../../mesh';
 
 const DEFAULT_COLOR = [255, 0, 255, 255];
 
@@ -49,10 +49,10 @@ export default class ScatterplotLayer extends InstancedLayer {
 
   _generateMeshes() {
     const meshes = new Map();
-    const circles = new InstancedCircles({
-      instancedPosition: this.data.map(x => this.props.getPosition(x)),
-      instancedColor: this.data.map(x => this.props.getPosition(x)),
-      instancedSize: this.data.map(x => this.props.getPosition(x)),
+    const circles = new Circles({
+      position: this.data.map(x => this.props.getPosition(x)),
+      color: this.data.map(x => this.props.getPosition(x)),
+      size: this.data.map(x => this.props.getPosition(x)),
       id: `${this.id}.circles`,
       cameraID: this.props.cameraID
     });
@@ -64,7 +64,7 @@ export default class ScatterplotLayer extends InstancedLayer {
 
   _updateMeshes({meshID, propertyID}) {
     this.state.meshes.get(`${this.id}.nodes`).updateProperty({
-      propertyID: 'instancedPosition',
+      propertyID: 'position',
       data: this.props.data.getNodePosition()
     });
 

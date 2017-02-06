@@ -1,72 +1,114 @@
 import {WebGL2RenderableMesh} from './webgl2-renderable-mesh';
+import {VertexAttribute} from '../../renderable-mesh';
+
 import {GL} from '../../luma.gl2/webgl2';
 
 export default class WebGL2Triangles extends WebGL2RenderableMesh {
-  constructor({triangles, renderer}) {
+  constructor({TriangleMesh, renderer}) {
     super({mesh: triangles, renderer});
+
     this._numberOfPrimitives = triangles.properties.get('index').hostData.length / 3;
+    // Additional properties and properties required for instanced drawing
+    this._numberOfInstances = triangles.properties.get('position').hostData.length / 3;
 
-    if (this.textures.size !== 0) {
-      const vsSource = `\
-      attribute vec3 position;
-      attribute vec4 color;
-      attribute vec2 texCoords;
+    // All renderable mesh need to have vertice position, texture coords, vertex color and vertex indices
 
-      uniform mat4 modelMatrix;
-      uniform mat4 viewProjectionMatrix;
+    this.attributes.set(
+      'position',
+      new VertexAttribute({
+        bufferID: this.renderer.bufferManager.newBuffer({
+          data: triangles.properties.get('position').hostData,
+          size: 3,
+          instanced: 1,
+          id: `${triangles.id}.position`
+        }),
+        size: 3,
+        instanced: 1
+      })
+    );
 
-      varying vec4 vColor;
-      varying vec2 vTexCoords;
+    this.attributes.set(
+      'color',
+      new VertexAttribute({
+        bufferID: this.renderer.bufferManager.newBuffer({
+          data: triangles.properties.get('color').hostData,
+          size: 4,
+          instanced: 1,
+          id: `${triangles.id}.color`
+        }),
+        size: 4,
+        instanced: 1
+      })
+    );
 
-      void main(void) {
-        vec4 position_clipspace = viewProjectionMatrix * modelMatrix * vec4(position, 1.0);
-        vColor = color;
-        vTexCoords = texCoords;
-        gl_Position = position_clipspace;
-      }
-      `;
+    this.attributes.set(
+      'size',
+      new VertexAttribute({
+        bufferID: this.renderer.bufferManager.newBuffer({
+          data: triangles.properties.get('size').hostData,
+          size: 1,
+          instanced: 1,
+          id: `${triangles.id}.size`
+        }),
+        size: 1,
+        instanced: 1
+      })
+    );
 
-      const fsSource = `\
-      #ifdef GL_ES
-      precision highp float;
-      #endif
+    // Standard instanced drawing shaders
+    const vsSource = `\
+    attribute vec3 vertices;
+    attribute vec2 texCoords;
 
-      varying vec4 vColor;
-      varying vec2 vTexCoords;
-      uniform sampler2D uSampler;
+    attribute vec3 position;
+    attribute vec4 color;
+    attribute float size;
 
-      void main(void) {
-        vec4 texVal = texture2D(uSampler, vTexCoords);
-        gl_FragColor = vec4(texVal.xyzw);
-      }
-      `;
+    uniform mat4 modelMatrix;
+    uniform mat4 viewProjectionMatrix;
 
-      this._programID = this.renderer.programManager.newProgramFromShaders({
-        vsSource,
-        fsSource,
-        id: 'textured_triangles_program'
-      });
+    varying vec4 vColor;
+    varying vec2 vTexCoords;
+
+    void main(void) {
+      vec4 position_clipspace = viewProjectionMatrix * modelMatrix * vec4((vertices * size + position), 1.0);
+      vColor = color;
+      //vColor = vec4(1.0, 0.5, 0.5, 1.0);
+      vTexCoords = texCoords;
+      gl_Position = position_clipspace;
     }
+    `;
+
+    const fsSource = `\
+    #ifdef GL_ES
+    precision highp float;
+    #endif
+
+    varying vec4 vColor;
+    varying vec2 vTexCoords;
+
+    void main(void) {
+      gl_FragColor = vColor;
+    }
+    `;
+
+    this._programID = this.renderer.programManager.newProgramFromShaders({
+      vsSource,
+      fsSource
+    });
   }
 
   render(cameraUniforms) {
     super.render(cameraUniforms);
 
-    this.getProgramByID(this._programID).setUniforms({
-      viewProjectionMatrix: cameraUniforms.viewProjectionMatrix
-    });
-
-    if (this.textures.size !== 0) {
-      // TODO: hard coded
-      const tex = this.renderer.textureManager.getTexture('digit');
-      this.getProgramByID(this._programID).setUniforms({
-        uSampler: tex
-      });
-    }
     if (this._uint32Indices === true) {
-      this.renderer.glContext.drawElements(GL.TRIANGLES, this._numberOfPrimitives * 3, GL.UNSIGNED_INT, 0);
+      this.renderer.glContext.drawElementsInstanced(
+        GL.TRIANGLES, this._numberOfPrimitives * 3, GL.UNSIGNED_INT, 0, this._numberOfInstances
+        );
     } else {
-      this.renderer.glContext.drawElements(GL.TRIANGLES, this._numberOfPrimitives * 3, GL.UNSIGNED_SHORT, 0);
+      this.renderer.glContext.drawElementsInstanced(
+        GL.TRIANGLES, this._numberOfPrimitives * 3, GL.UNSIGNED_SHORT, 0, this._numberOfInstances
+        );
     }
   }
 }

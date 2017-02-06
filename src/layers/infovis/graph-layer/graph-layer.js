@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 import {Layer} from '../../../lib';
-import {InstancedSpheres, InstancedCircles, Lines} from '../../../mesh';
+import {Spheres, Circles, Lines} from '../../../mesh';
 import {Sphere} from '../../../lib/utils/sphere';
 import {Intersect} from '../../../lib/utils/intersect';
 
@@ -69,7 +69,7 @@ export default class GraphLayer extends Layer {
       position[minIndex][2] = -20.0;
 
       this.state.meshes.get(`${this.id}.nodes`).updateProperty({
-        propertyID: 'instancedPosition',
+        propertyID: 'position',
         data: position
       });
 
@@ -89,18 +89,28 @@ export default class GraphLayer extends Layer {
   _generateMeshes() {
     const {getNodePosition, getNodeColor, getNodeSize, getEdgePosition, getEdgeColor} = this.props;
     const meshes = new Map();
-    const nodes = new InstancedCircles({
-      instancedPosition: getNodePosition(),
-      instancedColor: getNodeColor(),
-      instancedSize: getNodeSize(),
+
+    // Use the Circles mesh to show the node
+    const nodes = new Circles({
+      position: getNodePosition(),
+      color: getNodeColor(),
+      size: getNodeSize(),
       id: `${this.id}.nodes`,
       cameraID: this.props.cameraID
     });
 
+    // const nodes = new Spheres({
+    //   position: getNodePosition(),
+    //   color: getNodeColor(),
+    //   size: getNodeSize(),
+    //   id: `${this.id}.nodes`,
+    //   cameraID: this.props.cameraID
+    // });
+
     meshes.set(`${this.id}.nodes`, nodes);
 
     const edges = new Lines({
-      position: getEdgePosition(),
+      vertices: getEdgePosition(),
       color: getEdgeColor(),
       id: `${this.id}.edges`,
       cameraID: this.props.cameraID
@@ -115,12 +125,12 @@ export default class GraphLayer extends Layer {
     const {getNodePosition, getEdgePosition} = this.props;
 
     this.state.meshes.get(`${this.id}.nodes`).updateProperty({
-      propertyID: 'instancedPosition',
+      propertyID: 'position',
       data: getNodePosition()
     });
 
     this.state.meshes.get(`${this.id}.edges`).updateProperty({
-      propertyID: 'position',
+      propertyID: 'vertices',
       data: getEdgePosition()
     });
   }

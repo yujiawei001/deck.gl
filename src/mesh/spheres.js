@@ -8,8 +8,8 @@ function getMiddlePoint(a, b) {
 
   return [x / length, y / length, z / length];
 }
-export default class InstancedSpheres extends Mesh {
-  constructor({instancedPosition, instancedColor, instancedSize, id, cameraID = 'default-cam', textures = []}) {
+export default class Spheres extends Mesh {
+  constructor({position, color, size, id, cameraID = 'default-cam', textures = []}) {
     super({id, cameraID});
     // const t = (1.0 + Math.sqrt(5.0)) / 2.0;
 
@@ -78,36 +78,26 @@ export default class InstancedSpheres extends Mesh {
     const flattenedTypedIcosahedronVert = new Float32Array(flatten2D(icosahedronVert));
     const flattenedTypedIcosahedronVertIndex = new Uint16Array(flatten2D(icosahedronVertIndex));
 
-    this.properties.get('position').hostData = flattenedTypedIcosahedronVert;
+    // Per vertex
+    this.properties.get('vertices').hostData = flattenedTypedIcosahedronVert;
     this.properties.get('normals').hostData = flattenedTypedIcosahedronVert;
     this.properties.get('index').hostData = flattenedTypedIcosahedronVertIndex;
-
-    // no texture coord for now
     this.properties.get('texCoords').hostData = new Float32Array(icosahedronVert.length * 2);
 
-    // this is not in use for instanced rendering
-    const color = new Float32Array(icosahedronVert.length * 4);
-    for (let i = 0; i < icosahedronVert.length * 4; i++) {
-      color[i * 4 + 0] = 1.0;
-      color[i * 4 + 1] = 0.0;
-      color[i * 4 + 2] = 0.0;
-      color[i * 4 + 3] = 1.0;
-    }
-    this.properties.get('color').hostData = color;
-
+    // Per instance
     this.properties.set(
-      'instancedPosition',
-      new MeshProperty({id: 'instancedPosition', hostData: new Float32Array(flatten2D(instancedPosition))})
+      'position',
+      new MeshProperty({id: 'position', hostData: new Float32Array(flatten2D(position))})
     );
 
     this.properties.set(
-      'instancedColor',
-      new MeshProperty({id: 'instancedColor', hostData: new Float32Array(flatten2D(instancedColor))})
+      'color',
+      new MeshProperty({id: 'color', hostData: new Float32Array(flatten2D(color))})
     );
 
     this.properties.set(
-      'instancedSize',
-      new MeshProperty({id: 'instancedSize', hostData: new Float32Array(flatten2D(instancedSize))})
+      'size',
+      new MeshProperty({id: 'size', hostData: new Float32Array(flatten2D(size))})
     );
 
     this.textures = textures;

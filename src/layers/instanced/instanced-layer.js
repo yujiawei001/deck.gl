@@ -34,7 +34,7 @@ export class InstancedLayer extends Layer {
 
   _updateMeshes({meshID, propertyID}) {
     // this.state.meshes.get(`${this.id}.nodes`).updateProperty({
-    //   propertyID: 'instancedPosition',
+    //   propertyID: 'position',
     //   data: this.props.data.getNodePosition()
     // });
   }

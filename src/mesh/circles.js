@@ -1,8 +1,8 @@
 import {Mesh, MeshProperty} from './mesh';
 import {flatten2D} from '../lib/utils/flatten';
 
-export default class InstancedCircles extends Mesh {
-  constructor({instancedPosition, instancedColor, instancedSize, id, cameraID = 'default-cam', textures = []}) {
+export default class Circles extends Mesh {
+  constructor({position, color, size, id, cameraID = 'default-cam', textures = []}) {
     super({id, cameraID});
 
     const numSections = 16;
@@ -11,7 +11,6 @@ export default class InstancedCircles extends Mesh {
     const normals = new Float32Array((numSections + 1) * 3);
     const index = new Uint16Array(numSections * 3);
     const texCoords = new Float32Array((numSections + 1) * 2);
-    const color = new Float32Array(numSections * 4);
 
     for (let i = 0; i < numSections; i++) {
       vertices[i * 3 + 0] = Math.cos(Math.PI * 2 * i / numSections);
@@ -28,33 +27,35 @@ export default class InstancedCircles extends Mesh {
       index[i * 3 + 0] = i;
       index[i * 3 + 1] = (i + 1) % numSections;
       index[i * 3 + 2] = numSections;
-
-      // Color is not active in instanced rendering
-      color[i * 4 + 0] = 1.0;
-      color[i * 4 + 1] = 0.0;
-      color[i * 4 + 2] = 0.0;
-      color[i * 4 + 3] = 1.0;
     }
 
-    this.properties.get('position').hostData = vertices;
+    normals[numSections * 3 + 0] = 0;
+    normals[numSections * 3 + 1] = 0;
+    normals[numSections * 3 + 2] = 1;
+
+    texCoords[numSections * 2 + 0] = 0.5;
+    texCoords[numSections * 2 + 1] = 0.5;
+
+    // Per vertex
+    this.properties.get('vertices').hostData = vertices;
     this.properties.get('normals').hostData = normals;
     this.properties.get('index').hostData = index;
     this.properties.get('texCoords').hostData = texCoords;
-    this.properties.get('color').hostData = color;
 
+    // Per instance
     this.properties.set(
-      'instancedPosition',
-      new MeshProperty({id: 'instancedPosition', hostData: new Float32Array(flatten2D(instancedPosition))})
+      'position',
+      new MeshProperty({id: 'position', hostData: new Float32Array(flatten2D(position))})
     );
 
     this.properties.set(
-      'instancedColor',
-      new MeshProperty({id: 'instancedColor', hostData: new Float32Array(flatten2D(instancedColor))})
+      'color',
+      new MeshProperty({id: 'color', hostData: new Float32Array(flatten2D(color))})
     );
 
     this.properties.set(
-      'instancedSize',
-      new MeshProperty({id: 'instancedSize', hostData: new Float32Array(flatten2D(instancedSize))})
+      'size',
+      new MeshProperty({id: 'size', hostData: new Float32Array(flatten2D(size))})
     );
 
     this.textures = textures;
