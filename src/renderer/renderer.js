@@ -22,7 +22,6 @@ export class Renderer {
     this.debug = debug;
     this.contextOptions = glOptions;
 
-
     this.dpr = controller.dpr;
   }
 
@@ -138,7 +137,7 @@ export class Renderer {
     const gl = this.glContext;
     this.framebufferManager.bindFramebuffer(null);
 
-    const screenQuadProgram = this.programManager.getProgram(this.programManager.getScreenQuadProgramID());
+    const screenQuadProgram = this.programManager.getProgramByID('screenQuad');
     screenQuadProgram.use();
     let renderOrder = 0;
     for (const cameraID of this.cameraManager.cameras.keys()) {
@@ -157,7 +156,7 @@ export class Renderer {
       });
 
       screenQuadProgram.setUniforms({
-        screenTexture: tex,
+        tex0: tex,
         zDepth: -renderOrder * 1e-3
       });
 

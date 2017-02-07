@@ -37,8 +37,9 @@ export class RenderableMesh {
     this._modelMatrix = mesh.modelMatrix;
 
     this.lightLocations = new Float32Array(3 * 16);
+
     // default program
-    this._programID = this.renderer.programManager.getDefaultProgramID();
+    this._programID = 'default';
 
     this._uint32Indices = false;
 
@@ -125,7 +126,7 @@ export class RenderableMesh {
   }
 
   getProgramByID(id) {
-    return this.renderer.programManager.getProgram(id);
+    return this.renderer.programManager.getProgramByID(id);
   }
 
   render(cameraUniforms) {

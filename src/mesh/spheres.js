@@ -2,7 +2,6 @@ import {Mesh, MeshProperty} from './mesh';
 import {MeshGenerator} from './mesh-generator';
 import {flatten2D} from '../lib/utils/flatten';
 
-
 export default class Spheres extends Mesh {
   constructor({position, color, size, id, cameraID = 'default-cam', textures = []}) {
     super({id, cameraID});
