@@ -3,7 +3,7 @@ import React, {PropTypes, createElement} from 'react';
 import {WebGLRenderer, WebGL2Renderer} from '../renderer';
 import {LayerManager} from '../lib/layer-manager';
 import {EventManager} from '../event';
-// import Axes from '../layers/infovis/axes';
+import Axes from '../layers/infovis/axes';
 // import Plane from '../layers/infovis/plane';
 
 export default class DeckGL extends React.Component {
@@ -64,8 +64,8 @@ export default class DeckGL extends React.Component {
     with current layer diffing algorithms
     */
 
-    // const axes = new Axes();
-    // this.container.addLayers(axes);
+    const axes = new Axes({id: 'axes'});
+    this.container.addInternalLayer(axes);
 
     const cameraID = 'default-cam';
     /* camera parameters

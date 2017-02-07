@@ -35,6 +35,10 @@ export class LayerManager {
   constructor({controller}) {
     this.prevLayers = [];
     this.layers = [];
+    this.internalLayers = new Map();
+
+    this.visibleLayers = [];
+
     // context is deprecated and can be removed
     this.context = {};
     this.controller = controller;
@@ -42,6 +46,9 @@ export class LayerManager {
   }
 
   updateLayers(newLayers) {
+
+    this.visibleLayers = [];
+
     // Filter out any null layers
     newLayers = newLayers.filter(newLayer => newLayer !== null);
 
@@ -56,11 +63,35 @@ export class LayerManager {
     });
 
     this.layers = generatedLayers;
+
     // Throw first error found, if any
     if (error) {
       throw error;
     }
+
+    for (let i = 0; i < this.layers.length; i++) {
+      this.visibleLayers.push(this.layers[i]);
+    }
+
+    for (const layer of this.internalLayers.values()) {
+      this.visibleLayers.push(layer);
+    }
+
     return this;
+  }
+
+  addInternalLayer(layer) {
+    this.internalLayers.set(layer.id, layer);
+    this._initializeNewLayer(layer);
+  }
+
+  updateInternalLayer(layer) {
+    this._updateLayer(layer);
+  }
+
+  removeInternalLayer(layer) {
+    this._finalizeLayer(layer);
+    this.internalLayers.delete(layer.id);
   }
 
   isDataChanged() {
@@ -87,7 +118,7 @@ export class LayerManager {
 
   propertiesToUpdate() {
     const propertiesToUpdate = [];
-    for (const layer of this.layers) {
+    for (const layer of this.visibleLayers) {
       for (const mesh of layer.state.meshes.values()) {
         for (const property of mesh.properties.values()) {
           if (property.dirty === true) {
@@ -101,7 +132,7 @@ export class LayerManager {
 
   meshesToGenerate() {
     const meshesToGenerate = [];
-    for (const layer of this.layers) {
+    for (const layer of this.visibleLayers) {
       for (const mesh of layer.state.meshes.values()) {
         if (mesh.generated === false) {
           meshesToGenerate.push(mesh);
