@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 import {Layer} from '../../../lib';
-import {Spheres, Circles, Lines} from '../../../mesh';
+import {Spheres, Circles, Lines, Text2d} from '../../../mesh';
 import {Sphere} from '../../../lib/utils/sphere';
 import {Intersect} from '../../../lib/utils/intersect';
 
@@ -117,6 +117,17 @@ export default class GraphLayer extends Layer {
     });
 
     meshes.set(`${this.props.id}.edges`, edges);
+
+    const text = new Text2d({
+      position: [0, 0, 0],
+      color: [0.0, 1.0, 1.0, 1.0],
+      size: [1],
+      id: `${this.id}.labels`,
+      text: 'abcdefghijklmn',
+      cameraID: this.props.cameraID
+    });
+
+    meshes.set(`${this.props.id}.labels`, text);
 
     return meshes;
   }

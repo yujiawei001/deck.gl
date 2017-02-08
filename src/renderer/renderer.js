@@ -156,7 +156,7 @@ export class Renderer {
       });
 
       screenQuadProgram.setUniforms({
-        tex0: tex,
+        colorTex: tex,
         zDepth: -renderOrder * 1e-3
       });
 

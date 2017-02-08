@@ -84,17 +84,74 @@ export class MeshGenerator {
 
     for (let i = 0; i < numSections; i++) {
       vertices[i] = [Math.cos(Math.PI * 2 * i / numSections), Math.sin(Math.PI * 2 * i / numSections), 0];
-      normals[i] = [0, 0, 1];
+      normals[i] = [0, 0, -1];
       texCoords[i] = [(Math.cos(Math.PI * 2 * i / numSections) + 1) / 2, (Math.sin(Math.PI * 2 * i / numSections) + 1) / 2];
 
       index[i] = [i, (i + 1) % numSections, numSections];
     }
 
     vertices[numSections] = [0, 0, 0];
-    normals[numSections] = [0, 0, 1];
+    normals[numSections] = [0, 0, -1];
     texCoords[numSections] = [0.5, 0.5];
 
     return {vertices, normals, index, texCoords};
+  }
+
+  static textQuad({text, metadata}) {
+
+    const numberOfCharacters = text.length;
+
+    const vertices = new Array(numberOfCharacters * 4);
+    const normals = new Array(numberOfCharacters * 4);
+    const index = new Array(numberOfCharacters);
+    const texCoords = new Array(numberOfCharacters * 4);
+
+    const charMap = new Map();
+
+    let currentXPos = 0;
+
+    for (let i = 0; i < metadata.font.chars._count; i++) {
+      charMap.set(metadata.font.chars.char[i]._id, metadata.font.chars.char[i]);
+    }
+
+    const scaleHeight = Number(metadata.font.common._scaleH);
+    const scaleWidth = Number(metadata.font.common._scaleW);
+    const lineHeight = Number(metadata.font.common._lineHeight);
+
+    for (let i = 0; i < numberOfCharacters; i++) {
+      const charCode = text.charCodeAt(i);
+      const charData = charMap.get(charCode.toString());
+      const charX = Number(charData._x);
+      const charY = Number(charData._y);
+      const offsetX = Number(charData._xoffset);
+      const offsetY = Number(charData._yoffset);
+      const charHeight = Number(charData._height);
+      const charWidth = Number(charData._width);
+
+      const nextXPos = currentXPos + charWidth / lineHeight;
+
+      vertices[i * 4 + 0] = [currentXPos, -1 + (offsetY + charHeight) / lineHeight, 0];
+      vertices[i * 4 + 1] = [nextXPos, -1 + (offsetY + charHeight) / lineHeight, 0];
+      vertices[i * 4 + 2] = [currentXPos, -1 + offsetY / lineHeight, 0];
+      vertices[i * 4 + 3] = [nextXPos, -1 + offsetY / lineHeight, 0];
+
+      normals[i * 4 + 0] = [0, 0, -1];
+      normals[i * 4 + 1] = [0, 0, -1];
+      normals[i * 4 + 2] = [0, 0, -1];
+      normals[i * 4 + 3] = [0, 0, -1];
+
+      index[i] = [0, 1, 2, 1, 3, 2].map(x => x + i * 4);
+
+      texCoords[i * 4 + 0] = [charX / scaleWidth, 1 - (charY + charHeight) / scaleHeight];
+      texCoords[i * 4 + 1] = [(charX + charWidth) / scaleWidth, 1 - (charY + charHeight) / scaleHeight];
+      texCoords[i * 4 + 2] = [charX / scaleWidth, 1 - charY / scaleHeight];
+      texCoords[i * 4 + 3] = [(charX + charWidth) / scaleWidth, 1 - charY / scaleHeight];
+
+      currentXPos = nextXPos + lineHeight / 2000;
+    }
+
+    return {vertices, normals, index, texCoords};
+
   }
 
 }

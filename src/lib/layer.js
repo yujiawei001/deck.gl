@@ -96,6 +96,7 @@ export default class Layer {
   }
 
   pickingWithRay({ray}) {
+    // No-op as the default implementation
   }
 
   // Called once when layer is no longer matched and state will be discarded

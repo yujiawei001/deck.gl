@@ -1,1 +1,1 @@
-finalColor = texture2D(tex0, vTexCoords);
+finalColor = texture2D(colorTex, vTexCoords);

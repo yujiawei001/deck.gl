@@ -8,6 +8,7 @@ export class ProgramManager {
     this.glContext = this.renderer.glContext;
     this.programs = new Map();
     this.shaderDepot = SHADERS;
+    this.programCounter = 0;
 
     // Create a bunch of default programs
     const vsDefault = `\
@@ -57,13 +58,18 @@ export class ProgramManager {
   }
 
   newProgramFromShaders({vsSource, fsSource, id}) {
+
+    let programID = id;
+    if (programID === undefined) {
+      programID = `unamed_program${this.programCounter++}`;
+    }
     const program = new Program(this.renderer.glContext, {
       vs: vsSource,
       fs: fsSource
     });
 
-    this.programs.set(id, program);
-    return id;
+    this.programs.set(programID, program);
+    return programID;
   }
 
   getProgramByID(id) {

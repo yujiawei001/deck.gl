@@ -5,7 +5,7 @@ import {FramebufferManager} from '../framebuffer-manager';
 import {ProgramManager} from '../program-manager';
 import {TextureManager} from '../texture-manager';
 
-import {Lines, Spheres, TriangleMesh, Circles} from '../../mesh';
+import {Lines, Spheres, TriangleMesh, Circles, Text2d} from '../../mesh';
 import {WebGLTriangles, WebGLLines} from './webgl-renderable-mesh';
 
 import {createGLContext} from 'luma.gl';
@@ -64,6 +64,7 @@ export default class WebGLRenderer extends Renderer {
     case Spheres:
     case Circles:
     case TriangleMesh:
+    case Text2d:
       currentRenderableMesh = new WebGLTriangles({
         triangles: mesh,
         renderer: this

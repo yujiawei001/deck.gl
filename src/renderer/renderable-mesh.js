@@ -8,8 +8,8 @@ export class VertexAttribute {
 }
 /* The base class, RenderableMesh */
 export class RenderableMesh {
-  constructor({mesh, renderer}) {
-    console.log('WebGL2Renderable.constructor()');
+  constructor({mesh, renderer, textures = []}) {
+    console.log('RenderableMesh.constructor()');
     // These can be initialized in the super class because they are required for all Mesh objects
     this.renderer = renderer;
 
@@ -43,6 +43,10 @@ export class RenderableMesh {
 
     this._uint32Indices = false;
 
+    this._shaderFlags = {};
+    if (mesh.shaderFlags !== undefined) {
+      this._shaderFlags = mesh.shaderFlags;
+    }
     // All renderable mesh need to have vertice position, texture coords, vertex color and vertex indices
     this.attributes.set(
       'vertices',
@@ -104,23 +108,24 @@ export class RenderableMesh {
     //   initialColor[i * 4 + 3] = 255;
     // }
 
-    // for (let i = 0; i < mesh.textures.length; i++) {
-    //   this.textures.set(mesh.textures[i].id, {
-    //     textureID: this.renderer.textureManager.newTexture({
-    //       id: mesh.textures[i].id,
-    //       width: mesh.textures[i].width,
-    //       height: mesh.textures[i].height,
-    //       data: initialColor
-    //     })
-    //   });
-    // }
-
+    for (let i = 0; i < mesh.textures.length; i++) {
+      if (this.renderer.textureManager.hasTexture(mesh.textures[i].id)) {
+        this.textures.set(mesh.textures[i].target, mesh.textures[i].id);
+      }
+    }
   }
 
-  // Convenient function for communicating with resource managers
+  // Convenience functions for communicating with resource managers
   getBufferByID(id) {
     if (this.attributes.get(id) !== undefined) {
       return this.renderer.bufferManager.getBufferByID(this.attributes.get(id).bufferID);
+    }
+    return undefined;
+  }
+
+  getTextureByID(id) {
+    if (this.textures.get(id) !== undefined) {
+      return this.renderer.textureManager.getTextureByID(this.textures.get(id));
     }
     return undefined;
   }
@@ -144,8 +149,15 @@ export class RenderableMesh {
     });
 
     this.getProgramByID(this._programID).setUniforms({
-      cameraPos: cameraUniforms.cameraPosition,
+      cameraPos: cameraUniforms.cameraPosition
     });
+
+    const textures = {};
+    for (const key of this.textures.keys()) {
+      textures[key] = this.getTextureByID(key);
+    }
+
+    this.getProgramByID(this._programID).setUniforms(textures);
 
     this.lightLocations[0] = 0.0;
     this.lightLocations[1] = -100.0;
@@ -174,10 +186,12 @@ export class RenderableMesh {
     this.getProgramByID(this._programID).setUniforms({
       lightDirection: this.lightLocations
     });
+
     const buffers = {};
     for (const key of this.attributes.keys()) {
       buffers[key] = this.getBufferByID(key);
     }
+
     this.getProgramByID(this._programID).setBuffers(buffers);
 
   }

@@ -55,8 +55,9 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
       })
     );
 
+
     // Standard instanced drawing shaders
-    const vsSource = `\
+    let vsSource = `\
     attribute vec3 vertices;
     attribute vec2 texCoords;
     attribute vec3 normals;
@@ -91,10 +92,25 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
     }
     `;
 
-    const fsSource = `\
-    #ifdef GL_ES
-    precision highp float;
-    #endif
+    let fsSource = '';
+    fsSource += `\
+    precision mediump float;
+
+    `;
+
+    if (this._shaderFlags.useColorTexture === true) {
+      fsSource += `\
+      #define USE_COLOR_TEXTURE
+      `;
+    }
+
+    if (this._shaderFlags.useSDFTexture === true) {
+      fsSource += `\
+      #define USE_SDF_TEXTURE
+      `;
+    }
+
+    fsSource += `\
     #define number_of_lights 2
 
     varying vec4 vColor;
@@ -102,10 +118,42 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
     varying vec3 normal_world;
     varying vec3 position_world;
 
+    #ifdef USE_BLINN_PHONG_LIGHTING
     uniform vec3 cameraPos;
     uniform vec3 lightDirection[16];
+    #endif
+
+    #ifdef USE_COLOR_TEXTURE
+    uniform sampler2D colorTex;
+    #endif
+
+    #ifdef USE_SDF_TEXTURE
+    uniform sampler2D sdfTex;
+    const float smoothing = 1.0/8.0;
+    #endif
+
     void main(void) {
-      vec3 lightingColor = vec3(0.0, 0.0, 0.0);
+      vec4 finalColor = vColor;
+
+    #ifdef USE_COLOR_TEXTURE
+      vec4 texColor = texture2D(colorTex, vTexCoords);
+      finalColor.rgb += texColor.rgb;
+    #endif
+
+    #ifdef USE_SDF_TEXTURE
+      // vec4 texSDF = texture2D(sdfTex, vTexCoords);
+      // finalColor.rgb += texSDF.rgb;
+
+      float dist = texture2D(sdfTex, vTexCoords).r;
+      float alpha = smoothstep(0.5 - smoothing, 0.5 + smoothing, dist);
+      finalColor.a = alpha * vColor.a;
+      if (finalColor.a < 0.5) discard;
+    #endif
+
+    #ifdef USE_BLINN_PHONG_LIGHTING
+      finalColor.rgb += vColor.rgb;
+
+      float lightingStrength = 0.0;
 
       float lambertianStrength = 1.0;
       float specularStrength = 4.0;
@@ -127,11 +175,15 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
           specular = pow(specAngle, 32.0);
         }
         lambertian = max(lambertian, 0.0);
-        lightingColor += vColor.rgb * (ambientStrength + lambertianStrength * lambertian + specularStrength * specular) / float(number_of_lights);
+        lightingStrength += (ambientStrength + lambertianStrength * lambertian + specularStrength * specular) / float(number_of_lights);
       }
-      gl_FragColor = vec4(lightingColor.xyz, vColor.a);
+      finalColor *= lightingStrength;
+    #endif
+
+      gl_FragColor = finalColor;
     }
     `;
+
 
     this._programID = this.renderer.programManager.newProgramFromShaders({
       vsSource,
@@ -148,8 +200,7 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
       instancedDrawingExtension.drawElementsInstancedANGLE(
         GL.TRIANGLES, this._numberOfPrimitives * 3, this.renderer.glContext.UNSIGNED_INT, 0, this._numberOfInstances
         );
-    }
-    else {
+    } else {
       instancedDrawingExtension.drawElementsInstancedANGLE(
         GL.TRIANGLES, this._numberOfPrimitives * 3, this.renderer.glContext.UNSIGNED_SHORT, 0, this._numberOfInstances
         );
