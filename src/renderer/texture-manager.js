@@ -16,7 +16,8 @@ export class TextureManager {
         data: new Uint8Array(png.data),
         width: png.width,
         height: png.height,
-
+        magFilter: GL.LINEAR,
+        minFilter: GL.LINEAR,
         id: 'glyphAtlas'
       });
 
@@ -24,8 +25,8 @@ export class TextureManager {
     });
   }
 
-  newTexture({data = null, width = 1, height = 1, depth = 1, id = ''}) {
-    const tex = new Texture2D(this.renderer.glContext, {id});
+  newTexture({data = null, width = 1, height = 1, depth = 1, magFilter, minFilter, id = ''}) {
+    const tex = new Texture2D(this.renderer.glContext, {id, magFilter, minFilter, generateMipmap: true});
     tex.setImageData({data, width, height});
     this.textures.set(id, tex);
     return id;

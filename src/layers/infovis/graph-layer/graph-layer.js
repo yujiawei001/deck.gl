@@ -21,6 +21,7 @@ import {Layer} from '../../../lib';
 import {Spheres, Circles, Lines, Text2d} from '../../../mesh';
 import {Sphere} from '../../../lib/utils/sphere';
 import {Intersect} from '../../../lib/utils/intersect';
+import {quat} from 'gl-matrix';
 
 export default class GraphLayer extends Layer {
 
@@ -118,10 +119,20 @@ export default class GraphLayer extends Layer {
 
     meshes.set(`${this.props.id}.edges`, edges);
 
+    const rotationAxis = [0, 0, 1];
+    const rotationAngle = 60 * Math.PI / 180;
+    const rotationQuat = quat.normalize([], quat.fromValues(
+      rotationAxis[0] * Math.sin(rotationAngle / 2),
+      rotationAxis[1] * Math.sin(rotationAngle / 2),
+      rotationAxis[2] * Math.sin(rotationAngle / 2),
+      Math.cos(rotationAngle / 2)
+    ));
+
     const text = new Text2d({
       position: [0, 0, 0],
       color: [0.0, 1.0, 1.0, 1.0],
       size: [1],
+      rotation: [rotationQuat],
       id: `${this.id}.labels`,
       text: 'abcdefghijklmn',
       cameraID: this.props.cameraID

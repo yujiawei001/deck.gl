@@ -49,20 +49,20 @@ export class Mesh {
     }
 
     if (color === undefined) {
-      const defaultColor = new Array(numInstances.length).map(x => [0, 0, 0, 1]);
+      const defaultColor = Array.from({length: numInstances}).map(x => [0, 0, 0, 1]);
       this.properties.get('size').hostData = new Float32Array(flatten2D(defaultColor));
     } else {
       this.properties.get('color').hostData = new Float32Array(flatten2D(color));
     }
     if (size === undefined) {
-      const defaultSize = new Array(numInstances.length).map(x => [1]);
+      const defaultSize = Array.from({length: numInstances}).map(x => [1]);
       this.properties.get('size').hostData = new Float32Array(flatten2D(defaultSize));
     } else {
       this.properties.get('size').hostData = new Float32Array(flatten2D(size));
     }
 
     if (rotation === undefined) {
-      const defaultRotation = new Array(numInstances.length).map(x => [0, 0, 0, 1]);
+      const defaultRotation = Array.from({length: numInstances}).map(x => [0, 0, 0, 1]);
       this.properties.get('rotation').hostData = new Float32Array(flatten2D(defaultRotation));
     } else {
       this.properties.get('rotation').hostData = new Float32Array(flatten2D(rotation));

@@ -60,15 +60,14 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
       new VertexAttribute({
         bufferID: this.renderer.bufferManager.newBuffer({
           data: triangles.properties.get('rotation').hostData,
-          size: 1,
+          size: 4,
           instanced: 1,
           id: `${triangles.id}.rotation`
         }),
-        size: 1,
+        size: 4,
         instanced: 1
       })
     );
-
 
     // Standard instanced drawing shaders
     let vsSource = `\
@@ -90,9 +89,24 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
     varying vec3 normal_world;
     varying vec3 position_world;
 
+    vec3 rotate_by_quat(vec3 v, vec4 rotationQuat) {
+      // Extract the vector part of the quaternion
+      vec3 quat_vector = rotationQuat.xyz;
+
+      // Extract the scalar part of the quaternion
+      float quat_scalar = rotationQuat.w;
+
+      // Do the math
+      vec3 result = 2.0 * dot(quat_vector, v) * quat_vector
+            + (quat_scalar * quat_scalar - dot(quat_vector, quat_vector)) * v
+            + 2.0 * quat_scalar * cross(quat_vector, v);
+
+      return result;
+    }
 
     void main(void) {
-      vec4 position_world_vec4 = modelMatrix * vec4((vertices * size + position), 1.0);
+      vec3 rotated_vertices = rotate_by_quat(vertices, rotation);
+      vec4 position_world_vec4 = modelMatrix * vec4((rotated_vertices * size + position), 1.0);
       vec4 position_clipspace = viewProjectionMatrix * position_world_vec4;
 
       vColor = color;
@@ -144,7 +158,7 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
 
     #ifdef USE_SDF_TEXTURE
     uniform sampler2D sdfTex;
-    const float smoothing = 1.0/8.0;
+    const float smoothing = 1.0/16.0;
     #endif
 
     void main(void) {

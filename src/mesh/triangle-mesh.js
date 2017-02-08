@@ -1,7 +1,7 @@
 import {Mesh} from './mesh';
 
 export default class TriangleMesh extends Mesh {
-  constructor({vertices, texCoords, index, position, color, size, id, cameraID = 'default', textures = []}) {
+  constructor({vertices, texCoords, index, position, color, size, rotation, id, cameraID = 'default', textures = []}) {
     super({id, cameraID});
 
     // Per vertex

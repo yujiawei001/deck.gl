@@ -3,6 +3,7 @@ import {MeshGenerator} from './mesh-generator';
 import {flatten2D} from '../lib/utils/flatten';
 import {fontInfo} from '../renderer/font';
 
+// Text labels cannot be implemented as an instanced layer
 export default class Text2d extends Mesh {
   constructor({position, color, size, rotation, id, text, cameraID = 'default-cam'}) {
     super({id, position, color, size, rotation, cameraID});

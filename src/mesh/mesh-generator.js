@@ -101,6 +101,9 @@ export class MeshGenerator {
 
     const numberOfCharacters = text.length;
 
+    // as proportion of line height
+    const letterSpacing = 0.1;
+
     const vertices = new Array(numberOfCharacters * 4);
     const normals = new Array(numberOfCharacters * 4);
     const index = new Array(numberOfCharacters);
@@ -130,10 +133,10 @@ export class MeshGenerator {
 
       const nextXPos = currentXPos + charWidth / lineHeight;
 
-      vertices[i * 4 + 0] = [currentXPos, -1 + (offsetY + charHeight) / lineHeight, 0];
-      vertices[i * 4 + 1] = [nextXPos, -1 + (offsetY + charHeight) / lineHeight, 0];
-      vertices[i * 4 + 2] = [currentXPos, -1 + offsetY / lineHeight, 0];
-      vertices[i * 4 + 3] = [nextXPos, -1 + offsetY / lineHeight, 0];
+      vertices[i * 4 + 0] = [currentXPos, -0.5 + (offsetY + charHeight) / lineHeight, 0];
+      vertices[i * 4 + 1] = [nextXPos, -0.5 + (offsetY + charHeight) / lineHeight, 0];
+      vertices[i * 4 + 2] = [currentXPos, -0.5 + offsetY / lineHeight, 0];
+      vertices[i * 4 + 3] = [nextXPos, -0.5 + offsetY / lineHeight, 0];
 
       normals[i * 4 + 0] = [0, 0, -1];
       normals[i * 4 + 1] = [0, 0, -1];
@@ -147,9 +150,18 @@ export class MeshGenerator {
       texCoords[i * 4 + 2] = [charX / scaleWidth, 1 - charY / scaleHeight];
       texCoords[i * 4 + 3] = [(charX + charWidth) / scaleWidth, 1 - charY / scaleHeight];
 
-      currentXPos = nextXPos + lineHeight / 2000;
+      currentXPos = nextXPos + letterSpacing;
     }
 
+    // move the center of the quad to the origin
+    const quadWidthOffset = currentXPos / 2;
+    for (let i = 0; i < numberOfCharacters * 4; i++) {
+      vertices[i][0] -= quadWidthOffset;
+    }
+
+    // console.log('vertices before', vertices);
+    // vertices.map(vertex => [vertex[0] - quadWidthOffset, vertex[1] + quadHeightOffset, vertex[2]]);
+    // console.log('vertices after', vertices);
     return {vertices, normals, index, texCoords};
 
   }
