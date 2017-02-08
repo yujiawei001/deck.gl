@@ -1,10 +1,10 @@
-import {Mesh, MeshProperty} from './mesh';
+import {Mesh} from './mesh';
 import {MeshGenerator} from './mesh-generator';
 import {flatten2D} from '../lib/utils/flatten';
 
 export default class Spheres extends Mesh {
-  constructor({position, color, size, id, cameraID = 'default-cam', textures = []}) {
-    super({id, cameraID});
+  constructor({position, color, size, rotation, id, cameraID = 'default-cam', textures = []}) {
+    super({id, position, color, size, rotation, cameraID});
 
     // generating a unit sphere as a refined icosahedron
     const icosphere = MeshGenerator.unitIcosphere({refineLevel: 2});
@@ -20,22 +20,7 @@ export default class Spheres extends Mesh {
     this.properties.get('index').hostData = indices;
     this.properties.get('texCoords').hostData = texCoords;
 
-    // Per instance
-    this.properties.set(
-      'position',
-      new MeshProperty({id: 'position', hostData: new Float32Array(flatten2D(position))})
-    );
-
-    this.properties.set(
-      'color',
-      new MeshProperty({id: 'color', hostData: new Float32Array(flatten2D(color))})
-    );
-
-    this.properties.set(
-      'size',
-      new MeshProperty({id: 'size', hostData: new Float32Array(flatten2D(size))})
-    );
-
-    this.textures = textures;
+    // TODO: support textured sphere
+    // this.textures = textures;
   }
 }

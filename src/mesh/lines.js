@@ -8,6 +8,8 @@ export default class Lines extends Mesh {
     this.properties.get('vertices').hostData = new Float32Array(flatten2D(vertices));
     this.properties.get('normals').hostData = new Float32Array(flatten2D(vertices));
     this.properties.get('texCoords').hostData = texCoords !== undefined ? texCoords : new Float32Array(vertices.length * 2);
+
+    // reuse the color property as the per vertex color
     this.properties.get('color').hostData = new Float32Array(flatten2D(color));
 
     // if index is not provided, it means the user is expecting a non-indexed call.

@@ -39,6 +39,11 @@ export default class TriangleMesh extends Mesh {
       {hostData: new Float32Array(size)}
     );
 
+    this.properties.set(
+      'rotation',
+      {hostData: new Float32Array(rotation)}
+    );
+
     this.textures = textures;
   }
 }

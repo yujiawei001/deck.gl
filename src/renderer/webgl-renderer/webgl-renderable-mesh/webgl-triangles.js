@@ -48,7 +48,21 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
           data: triangles.properties.get('size').hostData,
           size: 1,
           instanced: 1,
-          id: `${triangles.id}size`
+          id: `${triangles.id}.size`
+        }),
+        size: 1,
+        instanced: 1
+      })
+    );
+
+    this.attributes.set(
+      'rotation',
+      new VertexAttribute({
+        bufferID: this.renderer.bufferManager.newBuffer({
+          data: triangles.properties.get('rotation').hostData,
+          size: 1,
+          instanced: 1,
+          id: `${triangles.id}.rotation`
         }),
         size: 1,
         instanced: 1
@@ -65,6 +79,7 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
     attribute vec3 position;
     attribute vec4 color;
     attribute float size;
+    attribute vec4 rotation;
 
     uniform mat4 modelMatrix;
     uniform mat4 viewMatrix;
