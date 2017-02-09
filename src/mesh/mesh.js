@@ -7,6 +7,11 @@ coincide with primitives renderers support natively. But any renderer
 needs to know how to convert each type of primitives here
 to real native primitives that can be rendered
 */
+
+// TODO: Mesh generation should be put under Renderer and be closer to RenderableMesh
+// Right now, Mesh classes contain too much render/shader specific info. This is NOT
+// the correct pattern.
+
 export class MeshProperty {
   constructor({id, hostData, deviceData, attributeID, size = 1, instanced = 0, dirty = false} = {}) {
     this.id = id;

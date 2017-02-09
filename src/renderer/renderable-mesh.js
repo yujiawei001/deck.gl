@@ -185,6 +185,10 @@ export class RenderableMesh {
 
   }
 
+  // TODO:
+  // RenderableMesh update should also happen with help from
+  // MeshGenerator classes.
+
   updateAttribute({attributeID, attributeData}) {
     const buffer = this.getVertexAttributeBufferByID(attributeID);
     buffer.setData({data: attributeData, size: this.attributes.get(attributeID).size, target: GL.ARRAY_BUFFER, instanced: this.attributes.get(attributeID).instanced});

@@ -57,6 +57,9 @@ export default class WebGLRenderer extends Renderer {
   Note: abstract mesh does not need to be a 1-on-1 match with
   renderable match */
 
+  // TODO: this should be where the MeshGenerator class kicks in.
+  // Mesh->RendereableMesh generation should be like:
+  // currentRenderableMesh = Text2dMeshGenerator.generate(mesh)
   generateRenderableMeshes(mesh) {
     let currentRenderableMesh;
 

@@ -200,6 +200,9 @@ export class MeshGenerator {
 
     const numberOfLabels = texts.length;
     const outputColor = generateColor ? new Array(vertices.length) : undefined;
+
+    // TODO: transformTextQuads is called at every data update.
+    // We probably don't want to allocate a new vertices array in transformTextQuads
     const outputVertices = new Array(vertices.length);
 
     let vertexCounter = 0;
