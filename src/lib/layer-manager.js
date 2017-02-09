@@ -122,7 +122,7 @@ export class LayerManager {
       for (const mesh of layer.state.meshes.values()) {
         for (const property of mesh.properties.values()) {
           if (property.dirty === true) {
-            propertiesToUpdate.push({mesh, property});
+            propertiesToUpdate.push({meshID: mesh.id, property});
           }
         }
       }

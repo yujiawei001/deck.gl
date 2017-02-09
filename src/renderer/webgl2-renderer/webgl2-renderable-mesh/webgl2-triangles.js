@@ -7,7 +7,6 @@ export default class WebGL2Triangles extends WebGL2RenderableMesh {
   constructor({TriangleMesh, renderer}) {
     super({mesh: triangles, renderer});
 
-    this._numberOfPrimitives = triangles.properties.get('index').hostData.length / 3;
     // Additional properties and properties required for instanced drawing
     this._numberOfInstances = triangles.properties.get('position').hostData.length / 3;
 
@@ -103,11 +102,11 @@ export default class WebGL2Triangles extends WebGL2RenderableMesh {
 
     if (this._uint32Indices === true) {
       this.renderer.glContext.drawElementsInstanced(
-        GL.TRIANGLES, this._numberOfPrimitives * 3, GL.UNSIGNED_INT, 0, this._numberOfInstances
+        GL.TRIANGLES, this._numberOfVertices, GL.UNSIGNED_INT, 0, this._numberOfInstances
         );
     } else {
       this.renderer.glContext.drawElementsInstanced(
-        GL.TRIANGLES, this._numberOfPrimitives * 3, GL.UNSIGNED_SHORT, 0, this._numberOfInstances
+        GL.TRIANGLES, this._numberOfVertices, GL.UNSIGNED_SHORT, 0, this._numberOfInstances
         );
     }
   }

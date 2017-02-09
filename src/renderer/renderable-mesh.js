@@ -27,7 +27,7 @@ export class RenderableMesh {
     this.attributes = new Map();
 
     // Number of primitives depends on the kind of primitive this mesh holds
-    this._numberOfPrimitives = 0;
+    this._numberOfVertices = 0;
 
     // Number of instances
     this._numberOfInstances = 0;
@@ -44,61 +44,50 @@ export class RenderableMesh {
     this._uint32Indices = false;
 
     this._shaderFlags = {};
+
     if (mesh.shaderFlags !== undefined) {
       this._shaderFlags = mesh.shaderFlags;
     }
-    // All renderable mesh need to have vertice position, texture coords, vertex color and vertex indices
-    this.attributes.set(
-      'vertices',
-      new VertexAttribute({
-        bufferID: this.renderer.bufferManager.newBuffer({
-          id: `${mesh.id}.vertices`,
-          data: mesh.properties.get('vertices').hostData,
-          size: 3
-        }),
-        size: 3,
-        instanced: 0
-      })
-    );
 
-    this.attributes.set(
-      'normals',
-      new VertexAttribute({
-        bufferID: this.renderer.bufferManager.newBuffer({
-          id: `${mesh.id}.normals`,
-          data: mesh.properties.get('normals').hostData,
-          size: 3
-        }),
-        size: 3,
-        instanced: 0
-      })
-    );
+    this._numberOfInstances = mesh.numberOfInstances;
 
-    this.attributes.set(
-      'texCoords',
-      new VertexAttribute({
-        bufferID: this.renderer.bufferManager.newBuffer({
-          id: `${mesh.id}.texCoords`,
-          data: mesh.properties.get('texCoords').hostData,
-          size: 2
-        }),
-        size: 2,
-        instanced: 0
-      })
-    );
+    for (const property of mesh.properties.values()) {
+      const attributeID = property.attributeID;
+      // index buffer requires special handling
+      if (attributeID === 'index') {
+        this.attributes.set(
+          attributeID,
+          new VertexAttribute({
+            bufferID: this.renderer.bufferManager.newBuffer({
+              id: `${mesh.id}.${attributeID}`,
+              data: property.hostData,
+              size: 1,
+              target: GL.ELEMENT_ARRAY_BUFFER,
+              instanced: 0
+            }),
+            size: 1,
+            instanced: 0
+          })
+        );
 
-    this.attributes.set(
-      'index',
-      new VertexAttribute({
-        bufferID: this.renderer.bufferManager.newBuffer({
-          id: `${mesh.id}.index`,
-          data: mesh.properties.get('index').hostData,
-          target: GL.ELEMENT_ARRAY_BUFFER
-        }),
-        size: 1,
-        instanced: 0
-      })
-    );
+        this._numberOfVertices = property.hostData.length;
+
+      } else {
+        this.attributes.set(
+          attributeID,
+          new VertexAttribute({
+            bufferID: this.renderer.bufferManager.newBuffer({
+              id: `${mesh.id}.${attributeID}`,
+              data: property.hostData,
+              size: property.size,
+              instanced: property.instanced
+            }),
+            size: property.size,
+            instanced: property.instanced
+          })
+        );
+      }
+    }
 
     // const initialColor = new Uint8Array(28 * 28 * 4);
     // for (let i = 0; i < initialColor.length / 4; i++) {
@@ -116,7 +105,7 @@ export class RenderableMesh {
   }
 
   // Convenience functions for communicating with resource managers
-  getBufferByID(id) {
+  getVertexAttributeBufferByID(id) {
     if (this.attributes.get(id) !== undefined) {
       return this.renderer.bufferManager.getBufferByID(this.attributes.get(id).bufferID);
     }
@@ -189,7 +178,7 @@ export class RenderableMesh {
 
     const buffers = {};
     for (const key of this.attributes.keys()) {
-      buffers[key] = this.getBufferByID(key);
+      buffers[key] = this.getVertexAttributeBufferByID(key);
     }
 
     this.getProgramByID(this._programID).setBuffers(buffers);
@@ -197,7 +186,7 @@ export class RenderableMesh {
   }
 
   updateAttribute({attributeID, attributeData}) {
-    const buffer = this.getBufferByID(attributeID);
+    const buffer = this.getVertexAttributeBufferByID(attributeID);
     buffer.setData({data: attributeData, size: this.attributes.get(attributeID).size, target: GL.ARRAY_BUFFER, instanced: this.attributes.get(attributeID).instanced});
   }
 }

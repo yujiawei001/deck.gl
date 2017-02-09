@@ -8,77 +8,56 @@ needs to know how to convert each type of primitives here
 to real native primitives that can be rendered
 */
 export class MeshProperty {
-  constructor({id, hostData, deviceData, dirty = false} = {}) {
+  constructor({id, hostData, deviceData, attributeID, size = 1, instanced = 0, dirty = false} = {}) {
     this.id = id;
+    this.attributeID = attributeID;
+    this.size = size;
+    this.instanced = instanced;
     this.hostData = hostData;
     this.deviceData = deviceData;
     this.dirty = dirty;
   }
 }
 export class Mesh {
-  constructor({id, position, color, size, rotation, cameraID}) {
+  constructor({id, cameraID}) {
     this.modelMatrix = mat4.create();
     this.id = id;
     this.cameraID = cameraID;
     this.properties = new Map();
+    this.attributePropertyMap = new Map();
 
     this.instancedDraw = true;
     this.indexedDraw = true;
+    this.numberOfInstances = 1;
 
     // Per vertex properties are set in subclasses
-
-    this.properties.set('vertices', new MeshProperty({id: 'vertices'}));
-    this.properties.set('texCoords', new MeshProperty({id: 'texCoords'}));
-    this.properties.set('index', new MeshProperty({id: 'index'}));
-    this.properties.set('normals', new MeshProperty({id: 'normals'}));
-
-
-    // Per instance properties are set here
-    this.properties.set('position', new MeshProperty({id: 'position'}));
-    this.properties.set('color', new MeshProperty({id: 'color'}));
-    this.properties.set('size', new MeshProperty({id: 'size'}));
-    this.properties.set('rotation', new MeshProperty({id: 'rotation'}));
-
-    // Per instance
-    let numInstances = 1;
-    if (position === undefined) {
-      this.properties.get('position').hostData = new Float32Array([0, 0, 0]);
-    } else {
-      this.properties.get('position').hostData = new Float32Array(flatten2D(position));
-      numInstances = position.length;
-    }
-
-    if (color === undefined) {
-      const defaultColor = Array.from({length: numInstances}).map(x => [0, 0, 0, 1]);
-      this.properties.get('size').hostData = new Float32Array(flatten2D(defaultColor));
-    } else {
-      this.properties.get('color').hostData = new Float32Array(flatten2D(color));
-    }
-    if (size === undefined) {
-      const defaultSize = Array.from({length: numInstances}).map(x => [1]);
-      this.properties.get('size').hostData = new Float32Array(flatten2D(defaultSize));
-    } else {
-      this.properties.get('size').hostData = new Float32Array(flatten2D(size));
-    }
-
-    if (rotation === undefined) {
-      const defaultRotation = Array.from({length: numInstances}).map(x => [0, 0, 0, 1]);
-      this.properties.get('rotation').hostData = new Float32Array(flatten2D(defaultRotation));
-    } else {
-      this.properties.get('rotation').hostData = new Float32Array(flatten2D(rotation));
-    }
+    this.properties.set('vertices', new MeshProperty({id: 'vertices', attributeID: 'vertices', size: 3}));
+    this.properties.set('texCoords', new MeshProperty({id: 'texCoords', attributeID: 'texCoords', size: 2}));
+    this.properties.set('index', new MeshProperty({id: 'index', attributeID: 'index', size: 1}));
+    this.properties.set('normals', new MeshProperty({id: 'normals', attributeID: 'normals', size: 3}));
+    this.properties.set('color', new MeshProperty({id: 'color', attributeID: 'color', size: 4}));
 
     this.textures = [];
 
     this.generated = false;
   }
 
-  updateProperty({propertyID, data}) {
-    const srcData = flatten2D(data);
-    const property = this.properties.get(propertyID).hostData;
-    for (let i = 0; i < property.length; i++) {
-      property[i] = srcData[i];
+  getDataForAttributeID(attributeID) {
+    const propertyID = this.propertyAttributeMap.get(attributeID);
+    return this.properties.get(propertyID).hostData;
+  }
+
+  updateProperties({propertyIDs, data}) {
+    for (let i = 0; i < propertyIDs.length; i++) {
+      const propertyID = propertyIDs[i];
+
+      const propertyToUpdate = this.properties.get(propertyID);
+      const srcData = flatten2D(data[i]);
+
+      for (let j = 0; j < propertyToUpdate.hostData.length; j++) {
+        propertyToUpdate.hostData[j] = srcData[j];
+      }
+      propertyToUpdate.dirty = true;
     }
-    this.properties.get(propertyID).dirty = true;
   }
 }

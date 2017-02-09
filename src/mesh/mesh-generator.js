@@ -1,3 +1,5 @@
+import {vec3, vec4} from 'gl-matrix';
+
 function getMiddlePoint(a, b) {
   const x = (a[0] + b[0]) / 2;
   const y = (a[1] + b[1]) / 2;
@@ -72,8 +74,10 @@ export class MeshGenerator {
 
     // tex coord of icosphere not implemented yet
     texCoords = new Float32Array(icosahedronVert.length * 2);
+    // color is not used for now
+    color = new Float32Array(icosahedronVert.length * 4);
 
-    return {vertices: icosahedronVert, normals: icosahedronVert, index: icosahedronVertIndex, texCoords: texCoords};
+    return {vertices: icosahedronVert, normals: icosahedronVert, index: icosahedronVertIndex, texCoords, color};
   }
 
   static unitCircle({numSections = 8}) {
@@ -81,11 +85,13 @@ export class MeshGenerator {
     const normals = new Array(numSections + 1);
     const index = new Array(numSections);
     const texCoords = new Array(numSections + 1);
+    const color = new Array(numSections + 1);
 
     for (let i = 0; i < numSections; i++) {
       vertices[i] = [Math.cos(Math.PI * 2 * i / numSections), Math.sin(Math.PI * 2 * i / numSections), 0];
       normals[i] = [0, 0, -1];
       texCoords[i] = [(Math.cos(Math.PI * 2 * i / numSections) + 1) / 2, (Math.sin(Math.PI * 2 * i / numSections) + 1) / 2];
+      color[i] = [0, 0, 0, 0];
 
       index[i] = [i, (i + 1) % numSections, numSections];
     }
@@ -93,70 +99,89 @@ export class MeshGenerator {
     vertices[numSections] = [0, 0, 0];
     normals[numSections] = [0, 0, -1];
     texCoords[numSections] = [0.5, 0.5];
+    color[numSections] = [0, 0, 0, 0];
+    // color is not used for now
 
-    return {vertices, normals, index, texCoords};
+    return {vertices, normals, index, texCoords, color};
   }
 
-  static textQuad({text, metadata}) {
+  static textQuads({position, color, size, rotation, texts, metadata}) {
+    const numberOfLabels = texts.length;
 
-    const numberOfCharacters = text.length;
-
-    // as proportion of line height
+    let vertices = [];
+    let normals = [];
+    let index = [];
+    let texCoords = [];
+    let indexStart = 0;
     const letterSpacing = 0.1;
 
-    const vertices = new Array(numberOfCharacters * 4);
-    const normals = new Array(numberOfCharacters * 4);
-    const index = new Array(numberOfCharacters);
-    const texCoords = new Array(numberOfCharacters * 4);
+    for (let i = 0; i < numberOfLabels; i++) {
+      const text = texts[i];
+      const numberOfCharacters = text.length;
 
-    const charMap = new Map();
+      // as proportion of line height
 
-    let currentXPos = 0;
+      const labelVertices = new Array(numberOfCharacters * 4);
+      const labelNormals = new Array(numberOfCharacters * 4);
+      const labelIndex = new Array(numberOfCharacters);
+      const labelTexCoords = new Array(numberOfCharacters * 4);
 
-    for (let i = 0; i < metadata.font.chars._count; i++) {
-      charMap.set(metadata.font.chars.char[i]._id, metadata.font.chars.char[i]);
-    }
+      const charMap = new Map();
 
-    const scaleHeight = Number(metadata.font.common._scaleH);
-    const scaleWidth = Number(metadata.font.common._scaleW);
-    const lineHeight = Number(metadata.font.common._lineHeight);
+      let currentXPos = 0;
 
-    for (let i = 0; i < numberOfCharacters; i++) {
-      const charCode = text.charCodeAt(i);
-      const charData = charMap.get(charCode.toString());
-      const charX = Number(charData._x);
-      const charY = Number(charData._y);
-      const offsetX = Number(charData._xoffset);
-      const offsetY = Number(charData._yoffset);
-      const charHeight = Number(charData._height);
-      const charWidth = Number(charData._width);
+      for (let j = 0; j < metadata.font.chars._count; j++) {
+        charMap.set(metadata.font.chars.char[j]._id, metadata.font.chars.char[j]);
+      }
 
-      const nextXPos = currentXPos + charWidth / lineHeight;
+      const scaleHeight = Number(metadata.font.common._scaleH);
+      const scaleWidth = Number(metadata.font.common._scaleW);
+      const lineHeight = Number(metadata.font.common._lineHeight);
 
-      vertices[i * 4 + 0] = [currentXPos, -0.5 + (offsetY + charHeight) / lineHeight, 0];
-      vertices[i * 4 + 1] = [nextXPos, -0.5 + (offsetY + charHeight) / lineHeight, 0];
-      vertices[i * 4 + 2] = [currentXPos, -0.5 + offsetY / lineHeight, 0];
-      vertices[i * 4 + 3] = [nextXPos, -0.5 + offsetY / lineHeight, 0];
+      for (let j = 0; j < numberOfCharacters; j++) {
+        const charCode = text.charCodeAt(j);
+        const charData = charMap.get(charCode.toString());
+        const charX = Number(charData._x);
+        const charY = Number(charData._y);
+        const offsetX = Number(charData._xoffset);
+        const offsetY = Number(charData._yoffset);
+        const charHeight = Number(charData._height);
+        const charWidth = Number(charData._width);
 
-      normals[i * 4 + 0] = [0, 0, -1];
-      normals[i * 4 + 1] = [0, 0, -1];
-      normals[i * 4 + 2] = [0, 0, -1];
-      normals[i * 4 + 3] = [0, 0, -1];
+        const nextXPos = currentXPos + charWidth / lineHeight;
 
-      index[i] = [0, 1, 2, 1, 3, 2].map(x => x + i * 4);
+        labelVertices[j * 4 + 0] = [currentXPos, -0.5 + (offsetY + charHeight) / lineHeight, 0];
+        labelVertices[j * 4 + 1] = [nextXPos, -0.5 + (offsetY + charHeight) / lineHeight, 0];
+        labelVertices[j * 4 + 2] = [currentXPos, -0.5 + offsetY / lineHeight, 0];
+        labelVertices[j * 4 + 3] = [nextXPos, -0.5 + offsetY / lineHeight, 0];
 
-      texCoords[i * 4 + 0] = [charX / scaleWidth, 1 - (charY + charHeight) / scaleHeight];
-      texCoords[i * 4 + 1] = [(charX + charWidth) / scaleWidth, 1 - (charY + charHeight) / scaleHeight];
-      texCoords[i * 4 + 2] = [charX / scaleWidth, 1 - charY / scaleHeight];
-      texCoords[i * 4 + 3] = [(charX + charWidth) / scaleWidth, 1 - charY / scaleHeight];
+        labelNormals[j * 4 + 0] = [0, 0, -1];
+        labelNormals[j * 4 + 1] = [0, 0, -1];
+        labelNormals[j * 4 + 2] = [0, 0, -1];
+        labelNormals[j * 4 + 3] = [0, 0, -1];
 
-      currentXPos = nextXPos + letterSpacing;
-    }
+        labelIndex[j] = [0, 1, 2, 1, 3, 2].map(x => x + j * 4 + indexStart);
 
-    // move the center of the quad to the origin
-    const quadWidthOffset = currentXPos / 2;
-    for (let i = 0; i < numberOfCharacters * 4; i++) {
-      vertices[i][0] -= quadWidthOffset;
+        labelTexCoords[j * 4 + 0] = [charX / scaleWidth, 1 - (charY + charHeight) / scaleHeight];
+        labelTexCoords[j * 4 + 1] = [(charX + charWidth) / scaleWidth, 1 - (charY + charHeight) / scaleHeight];
+        labelTexCoords[j * 4 + 2] = [charX / scaleWidth, 1 - charY / scaleHeight];
+        labelTexCoords[j * 4 + 3] = [(charX + charWidth) / scaleWidth, 1 - charY / scaleHeight];
+
+        currentXPos = nextXPos + letterSpacing;
+      }
+
+      const quadWidthOffset = currentXPos / 2;
+      for (let j = 0; j < numberOfCharacters * 4; j++) {
+        // move the center of the quad to the origin
+        labelVertices[j][0] -= quadWidthOffset;
+      }
+
+      vertices = vertices.concat(labelVertices);
+      normals = normals.concat(labelNormals);
+      index = index.concat(labelIndex);
+      texCoords = texCoords.concat(labelTexCoords);
+
+      indexStart += numberOfCharacters * 4;
     }
 
     // console.log('vertices before', vertices);
@@ -165,5 +190,80 @@ export class MeshGenerator {
     return {vertices, normals, index, texCoords};
 
   }
+
+  static transformTextQuads({vertices, position, color, size, rotation, texts}) {
+
+    const transformPosition = (position !== undefined);
+    const generateColor = (color !== undefined);
+    const transformSize = (size !== undefined);
+    const transformRotation = (rotation !== undefined);
+
+    const numberOfLabels = texts.length;
+    const outputColor = generateColor ? new Array(vertices.length) : undefined;
+    const outputVertices = new Array(vertices.length);
+
+    let vertexCounter = 0;
+
+    for (let i = 0; i < numberOfLabels; i++) {
+      const numberOfCharacters = texts[i].length;
+
+      for (let j = 0; j < numberOfCharacters * 4; j++) {
+        outputVertices[vertexCounter] = new Array(3);
+
+        outputVertices[vertexCounter][0] = vertices[vertexCounter][0];
+        outputVertices[vertexCounter][1] = vertices[vertexCounter][1];
+        outputVertices[vertexCounter][2] = vertices[vertexCounter][2];
+
+        const vertex = outputVertices[vertexCounter];
+
+        if (transformSize) {
+          for (let k = 0; k < 3; k++) {
+            vertex[k] *= size[i];
+          }
+        }
+
+        if (transformRotation) {
+          rotateByQuat(vertex, rotation[i]);
+        }
+
+        if (transformPosition) {
+          for (let k = 0; k < 3; k++) {
+            vertex[k] += position[i][k];
+          }
+        }
+
+        if (generateColor) {
+          outputColor[vertexCounter] = color[i];
+        }
+
+        vertexCounter++;
+      }
+    }
+
+    return {vertices: outputVertices, color: outputColor};
+  }
+}
+
+function rotateByQuat(v, rotationQuat) {
+  /*
+  vec3 result = 2.0 * dot(quat_vector, v) * quat_vector
+        + (quat_scalar * quat_scalar - dot(quat_vector, quat_vector)) * v
+        + 2.0 * quat_scalar * cross(quat_vector, v);
+  */
+
+  // Extract the vector part of the quaternion
+  const quatVector = vec3.fromValues(rotationQuat[0], rotationQuat[1], rotationQuat[2]);
+  const quatScalar = rotationQuat[3];
+
+  // Do the math
+  const firstPart = vec3.scale([], quatVector, vec3.dot(quatVector, v) * 2.0);
+  const secondPart = vec3.scale([], v, (quatScalar * quatScalar - vec3.dot(quatVector, quatVector)));
+  const thirdPart = vec3.scale([], vec3.cross([], quatVector, v), 2.0 * quatScalar);
+
+  const result = vec3.add([], vec3.add([], firstPart, secondPart), thirdPart);
+
+  v[0] = result[0];
+  v[1] = result[1];
+  v[2] = result[2];
 
 }

@@ -100,13 +100,13 @@ export default class GraphLayer extends Layer {
       cameraID: this.props.cameraID
     });
 
-    // const nodes = new Spheres({
-    //   position: getNodePosition(),
-    //   color: getNodeColor(),
-    //   size: getNodeSize(),
-    //   id: `${this.id}.nodes`,
-    //   cameraID: this.props.cameraID
-    // });
+    // // const nodes = new Spheres({
+    // //   position: getNodePosition(),
+    // //   color: getNodeColor(),
+    // //   size: getNodeSize(),
+    // //   id: `${this.id}.nodes`,
+    // //   cameraID: this.props.cameraID
+    // // });
 
     meshes.set(`${this.id}.nodes`, nodes);
 
@@ -119,22 +119,29 @@ export default class GraphLayer extends Layer {
 
     meshes.set(`${this.props.id}.edges`, edges);
 
-    const rotationAxis = [0, 0, 1];
-    const rotationAngle = 60 * Math.PI / 180;
-    const rotationQuat = quat.normalize([], quat.fromValues(
-      rotationAxis[0] * Math.sin(rotationAngle / 2),
-      rotationAxis[1] * Math.sin(rotationAngle / 2),
-      rotationAxis[2] * Math.sin(rotationAngle / 2),
-      Math.cos(rotationAngle / 2)
-    ));
+    const textArray = new Array(getNodePosition().length);
+    for (let i = 0; i < getNodePosition().length; i++) {
+      textArray[i] = i.toString();
+    }
+    // /* We can add rotation here */
+    // const rotationQuat = new Array(getNodePosition().length);
+    // for (let i = 0; i < getNodePosition().length; i++) {
+    //   const rotationAxis = [0, 0, 1];
+    //   const rotationAngle = Math.random() * 2 * Math.PI;
+    //   rotationQuat[i] = quat.normalize([], quat.fromValues(
+    //     rotationAxis[0] * Math.sin(rotationAngle / 2),
+    //     rotationAxis[1] * Math.sin(rotationAngle / 2),
+    //     rotationAxis[2] * Math.sin(rotationAngle / 2),
+    //     Math.cos(rotationAngle / 2)
+    //   ));
+    // }
 
     const text = new Text2d({
-      position: [0, 0, 0],
-      color: [0.0, 1.0, 1.0, 1.0],
-      size: [1],
-      rotation: [rotationQuat],
+      position: getNodePosition().map(x => [x[0], x[1] - 0.7, x[2]]), // put text labels above nodes
+      color: getNodeColor(),
+      size: getNodeSize().map(x => x * 3), // a bit larger than node size
       id: `${this.id}.labels`,
-      text: 'abcdefghijklmn',
+      texts: textArray,
       cameraID: this.props.cameraID
     });
 
@@ -146,15 +153,21 @@ export default class GraphLayer extends Layer {
   _updateMeshes({meshID, propertyID}) {
     const {getNodePosition, getEdgePosition} = this.props;
 
-    this.state.meshes.get(`${this.id}.nodes`).updateProperty({
-      propertyID: 'position',
-      data: getNodePosition()
+    this.state.meshes.get(`${this.id}.nodes`).updateProperties({
+      propertyIDs: ['position'],
+      data: [getNodePosition()]
     });
 
-    this.state.meshes.get(`${this.id}.edges`).updateProperty({
-      propertyID: 'vertices',
-      data: getEdgePosition()
+    this.state.meshes.get(`${this.id}.edges`).updateProperties({
+      propertyIDs: ['vertices'],
+      data: [getEdgePosition()]
     });
+
+    this.state.meshes.get(`${this.id}.labels`).updateProperties({
+      propertyIDs: ['position'],
+      data: [getNodePosition().map(x => [x[0], x[1] - 0.7, x[2]])]
+    });
+
   }
 }
 

@@ -73,17 +73,17 @@ export class Renderer {
     //   // TODO
   }
 
-  /* This function will be significantly improved */
-  updateRenderableMeshes({attributes}) {
-    for (const entry of attributes) {
-      this.renderableMeshes.get(`${entry.mesh.id}.renderer`).updateAttribute({
-        attributeID: entry.property.id,
+  /* TODO: This function will be significantly improved */
+  updateRenderableMeshes({entries}) {
+    for (const entry of entries) {
+      this.renderableMeshes.get(`${entry.meshID}.renderer`).updateAttribute({
+        attributeID: entry.property.attributeID,
         attributeData: entry.property.hostData
       });
       // Clear the dirty flag
       entry.property.dirty = false;
     }
-    if (attributes.size !== 0) {
+    if (entries.size !== 0) {
       this.needsRedraw = true;
     }
   }

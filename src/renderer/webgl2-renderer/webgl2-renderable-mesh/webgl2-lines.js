@@ -5,7 +5,6 @@ import {GL} from '../../luma.gl2/webgl2';
 export default class WebGL2Lines extends WebGL2RenderableMesh {
   constructor({lines, renderer}) {
     super({mesh: lines, renderer});
-    this._numberOfPrimitives = lines.properties.get('index').hostData.length / 2;
     this.width = lines.width;
   }
 
@@ -15,9 +14,9 @@ export default class WebGL2Lines extends WebGL2RenderableMesh {
     // Not sure with line width doesn't work on Chrome
     // console.log('line width:', this.renderer.glContext.getParameter(this.renderer.glContext.LINE_WIDTH));
     if (this._uint32Indices === true) {
-      this.renderer.glContext.drawElements(GL.LINES, this._numberOfPrimitives * 2, GL.UNSIGNED_INT, 0);
+      this.renderer.glContext.drawElements(GL.LINES, this._numberOfVertices, GL.UNSIGNED_INT, 0);
     } else {
-      this.renderer.glContext.drawElements(GL.LINES, this._numberOfPrimitives * 2, GL.UNSIGNED_SHORT, 0);
+      this.renderer.glContext.drawElements(GL.LINES, this._numberOfVertices, GL.UNSIGNED_SHORT, 0);
     }
   }
 }

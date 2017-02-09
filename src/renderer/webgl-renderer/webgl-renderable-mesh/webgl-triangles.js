@@ -1,84 +1,21 @@
 import {WebGLRenderableMesh} from './webgl-renderable-mesh';
-import {VertexAttribute} from '../../renderable-mesh';
-
 import {GL} from '../../luma.gl2/webgl2';
 
 export default class WebGLTriangles extends WebGLRenderableMesh {
   constructor({triangles, renderer}) {
     super({mesh: triangles, renderer});
 
-    this._numberOfPrimitives = triangles.properties.get('index').hostData.length / 3;
-
-    // Additional properties and properties required for instanced drawing
-    this._numberOfInstances = triangles.properties.get('position').hostData.length / 3;
-
-    // All renderable mesh need to have vertice position, texture coords, vertex color and vertex indices
-    this.attributes.set(
-      'position',
-      new VertexAttribute({
-        bufferID: this.renderer.bufferManager.newBuffer({
-          data: triangles.properties.get('position').hostData,
-          size: 3,
-          instanced: 1,
-          id: `${triangles.id}.position`
-        }),
-        size: 3,
-        instanced: 1
-      })
-    );
-
-    this.attributes.set(
-      'color',
-      new VertexAttribute({
-        bufferID: this.renderer.bufferManager.newBuffer({
-          data: triangles.properties.get('color').hostData,
-          size: 4,
-          instanced: 1,
-          id: `${triangles.id}.color`
-        }),
-        size: 4,
-        instanced: 1
-      })
-    );
-
-    this.attributes.set(
-      'size',
-      new VertexAttribute({
-        bufferID: this.renderer.bufferManager.newBuffer({
-          data: triangles.properties.get('size').hostData,
-          size: 1,
-          instanced: 1,
-          id: `${triangles.id}.size`
-        }),
-        size: 1,
-        instanced: 1
-      })
-    );
-
-    this.attributes.set(
-      'rotation',
-      new VertexAttribute({
-        bufferID: this.renderer.bufferManager.newBuffer({
-          data: triangles.properties.get('rotation').hostData,
-          size: 4,
-          instanced: 1,
-          id: `${triangles.id}.rotation`
-        }),
-        size: 4,
-        instanced: 1
-      })
-    );
-
     // Standard instanced drawing shaders
     let vsSource = `\
     attribute vec3 vertices;
     attribute vec2 texCoords;
     attribute vec3 normals;
-
-    attribute vec3 position;
     attribute vec4 color;
-    attribute float size;
-    attribute vec4 rotation;
+
+    attribute vec3 instancePosition;
+    attribute vec4 instanceColor;
+    attribute float instanceScale;
+    attribute vec4 instanceRotation;
 
     uniform mat4 modelMatrix;
     uniform mat4 viewMatrix;
@@ -105,11 +42,12 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
     }
 
     void main(void) {
-      vec3 rotated_vertices = rotate_by_quat(vertices, rotation);
-      vec4 position_world_vec4 = modelMatrix * vec4((rotated_vertices * size + position), 1.0);
+      vec3 rotated_vertices = rotate_by_quat(vertices, instanceRotation);
+      // vec3 rotated_vertices = vertices;
+      vec4 position_world_vec4 = modelMatrix * vec4((rotated_vertices * instanceScale + instancePosition), 1.0);
       vec4 position_clipspace = viewProjectionMatrix * position_world_vec4;
 
-      vColor = color;
+      vColor = instanceColor + color;
       vTexCoords = texCoords;
 
       vec4 normal_world_vec4 = modelMatrix * vec4(normals.xyz, 1.0);
@@ -213,7 +151,6 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
     }
     `;
 
-
     this._programID = this.renderer.programManager.newProgramFromShaders({
       vsSource,
       fsSource
@@ -227,11 +164,11 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
 
     if (this._uint32Indices === true) {
       instancedDrawingExtension.drawElementsInstancedANGLE(
-        GL.TRIANGLES, this._numberOfPrimitives * 3, this.renderer.glContext.UNSIGNED_INT, 0, this._numberOfInstances
+        GL.TRIANGLES, this._numberOfVertices, this.renderer.glContext.UNSIGNED_INT, 0, this._numberOfInstances
         );
     } else {
       instancedDrawingExtension.drawElementsInstancedANGLE(
-        GL.TRIANGLES, this._numberOfPrimitives * 3, this.renderer.glContext.UNSIGNED_SHORT, 0, this._numberOfInstances
+        GL.TRIANGLES, this._numberOfVertices, this.renderer.glContext.UNSIGNED_SHORT, 0, this._numberOfInstances
         );
     }
   }
