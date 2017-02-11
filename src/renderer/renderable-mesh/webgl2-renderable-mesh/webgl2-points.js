@@ -8,10 +8,10 @@ export default class WebGL2Points extends WebGL2RenderableMesh {
 
   render(cameraUniforms) {
     super.render(cameraUniforms);
-    if (this._uint32Indices === true) {
-      this.renderer.glContext.drawElements(GL.POINTS, this._numberOfVertices, GL.UNSIGNED_INT, 0);
+    if (this.uint32Indices === true) {
+      this.renderer.glContext.drawElements(GL.POINTS, this.numberOfVertices, GL.UNSIGNED_INT, 0);
     } else {
-      this.renderer.glContext.drawElements(GL.POINTS, this._numberOfVertices, GL.UNSIGNED_SHORT, 0);
+      this.renderer.glContext.drawElements(GL.POINTS, this.numberOfVertices, GL.UNSIGNED_SHORT, 0);
     }
   }
 }

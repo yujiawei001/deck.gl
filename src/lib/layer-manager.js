@@ -117,12 +117,15 @@ export class LayerManager {
   }
 
   propertiesToUpdate() {
-    const propertiesToUpdate = [];
+    const propertiesToUpdate = new Map();
     for (const layer of this.visibleLayers) {
       for (const mesh of layer.state.meshes.values()) {
         for (const property of mesh.properties.values()) {
           if (property.dirty === true) {
-            propertiesToUpdate.push({meshID: mesh.id, property});
+            if (propertiesToUpdate.has(mesh.id) === false) {
+              propertiesToUpdate.set(mesh.id, new Map());
+            }
+            propertiesToUpdate.get(mesh.id).set(property.id, property);
           }
         }
       }

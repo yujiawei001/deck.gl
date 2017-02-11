@@ -3,6 +3,8 @@ import {Ray} from '../lib/utils/ray';
 import {GL} from './luma.gl2/webgl2';
 import {vec3, vec4, mat4} from 'gl-matrix';
 
+import {RenderableMeshGenerator} from './renderable-mesh/generator/renderable-mesh-generator';
+
 // On screen WebGL renderer
 export class Renderer {
   constructor({controller, canvas, debug, glOptions}) {
@@ -57,16 +59,36 @@ export class Renderer {
   /* Generating renderable geometry from abstract geometry.
   Renderable geometry doesn't need to match abstract geometry but to
   maximize the rendering performance. */
+
+  /* Generate renderable mesh from abstract mesh.
+  Basically a switch statment right now.
+  Most of the work are delegated to each RenderableMesh's constructor
+  But eventually it will involve significant work in transforming
+  abstract mesh to renderable mesh.
+
+  This is the primary place that the user uses GPU compute to
+  accelerate data transformation and mesh generation. If the user
+  choose to do GPU compute here, he can use the existing drawing
+  context and keep the outputs on the GPU.
+
+  Note: abstract mesh does not need to be a 1-on-1 match with
+  renderable match */
+
+  // TODO: this should be where the MeshGenerator class kicks in.
+  // Mesh->RendereableMesh generation should be like:
+  // currentRenderableMesh = Text2dMeshGenerator.generate(mesh)
+
   regenerateRenderableMeshes({meshes}) {
 
     /* When data structure changed, we need to update the rendering geometries.
     Right now, rendering geometries are regenerated from ground up. This should be
     optimized to regenerating only the change part of the whole scene tree.
     Major optimization could happen here */
-    for (const entry of meshes) {
-      this.renderableMeshes.set(`${entry.id}.renderer`, this.generateRenderableMeshes(entry));
+    for (const mesh of meshes) {
+      this.renderableMeshes.set(`${mesh.id}.renderable`, RenderableMeshGenerator.generate({mesh, renderer: this})
+      );
       // Clear the flag
-      entry.generated = true;
+      mesh.generated = true;
     }
     this.needsRedraw = true;
     //   // Optimizing renderingGeometries
@@ -74,16 +96,19 @@ export class Renderer {
   }
 
   /* TODO: This function will be significantly improved */
-  updateRenderableMeshes({entries}) {
-    for (const entry of entries) {
-      this.renderableMeshes.get(`${entry.meshID}.renderer`).updateAttribute({
-        attributeID: entry.property.attributeID,
-        attributeData: entry.property.hostData
+  updateRenderableMeshes(properties) {
+    for (const [meshID, propertiesOfMesh] of properties) {
+      this.renderableMeshes.get(`${meshID}.renderable`).updateAttributes({
+        properties: propertiesOfMesh
       });
+
       // Clear the dirty flag
-      entry.property.dirty = false;
+      for (const property of propertiesOfMesh.values()) {
+        property.dirty = false;
+      }
     }
-    if (entries.size !== 0) {
+
+    if (properties.size !== 0) {
       this.needsRedraw = true;
     }
   }

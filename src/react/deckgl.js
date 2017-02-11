@@ -154,8 +154,8 @@ export default class DeckGL extends React.Component {
       this.renderer.activated = true;
     }
 
-    const entries = this.container.propertiesToUpdate();
-    this.renderer.updateRenderableMeshes({entries});
+    const properties = this.container.propertiesToUpdate();
+    this.renderer.updateRenderableMeshes(properties);
 
     this.propsChanged = false;
   }

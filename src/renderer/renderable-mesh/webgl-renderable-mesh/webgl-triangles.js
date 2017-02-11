@@ -2,9 +2,11 @@ import {WebGLRenderableMesh} from './webgl-renderable-mesh';
 import {GL} from '../../luma.gl2/webgl2';
 
 export default class WebGLTriangles extends WebGLRenderableMesh {
-  constructor({triangles, renderer}) {
-    super({mesh: triangles, renderer});
+  constructor({mesh, renderer}) {
+    super({mesh, renderer});
+  }
 
+  generateProgram() {
     // Standard instanced drawing shaders
     let vsSource = `\
     attribute vec3 vertices;
@@ -47,6 +49,7 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
       vec4 position_world_vec4 = modelMatrix * vec4((rotated_vertices * instanceScale + instancePosition), 1.0);
       vec4 position_clipspace = viewProjectionMatrix * position_world_vec4;
 
+      /* TODO: correct way to deal with instance color and color */
       vColor = instanceColor + color;
       vTexCoords = texCoords;
 
@@ -65,13 +68,13 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
 
     `;
 
-    if (this._shaderFlags.useColorTexture === true) {
+    if (this.shaderFlags.useColorTexture === true) {
       fsSource += `\
       #define USE_COLOR_TEXTURE
       `;
     }
 
-    if (this._shaderFlags.useSDFTexture === true) {
+    if (this.shaderFlags.useSDFTexture === true) {
       fsSource += `\
       #define USE_SDF_TEXTURE
       `;
@@ -151,24 +154,26 @@ export default class WebGLTriangles extends WebGLRenderableMesh {
     }
     `;
 
-    this._programID = this.renderer.programManager.newProgramFromShaders({
+    this.programID = this.renderer.programManager.newProgramFromShaders({
       vsSource,
       fsSource
     });
+
   }
+
 
   render(cameraUniforms) {
     super.render(cameraUniforms);
 
     const instancedDrawingExtension = this.renderer.glContext.getExtension('ANGLE_instanced_arrays');
 
-    if (this._uint32Indices === true) {
+    if (this.uint32Indices === true) {
       instancedDrawingExtension.drawElementsInstancedANGLE(
-        GL.TRIANGLES, this._numberOfVertices, this.renderer.glContext.UNSIGNED_INT, 0, this._numberOfInstances
+        GL.TRIANGLES, this.numberOfVertices, this.renderer.glContext.UNSIGNED_INT, 0, this.numberOfInstances
         );
     } else {
       instancedDrawingExtension.drawElementsInstancedANGLE(
-        GL.TRIANGLES, this._numberOfVertices, this.renderer.glContext.UNSIGNED_SHORT, 0, this._numberOfInstances
+        GL.TRIANGLES, this.numberOfVertices, this.renderer.glContext.UNSIGNED_SHORT, 0, this.numberOfInstances
         );
     }
   }

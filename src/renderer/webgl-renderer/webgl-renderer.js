@@ -4,10 +4,6 @@ import {CameraManager} from '../camera-manager';
 import {FramebufferManager} from '../framebuffer-manager';
 import {ProgramManager} from '../program-manager';
 import {TextureManager} from '../texture-manager';
-
-import {Lines, Spheres, TriangleMesh, Circles, Text2d} from '../../mesh';
-import {WebGLTriangles, WebGLLines} from './webgl-renderable-mesh';
-
 import {createGLContext} from 'luma.gl';
 
 // On screen WebGL renderer
@@ -43,46 +39,4 @@ export default class WebGLRenderer extends Renderer {
     this.framebufferManager = new FramebufferManager(this);
   }
 
-  /* Generate renderable mesh from abstract mesh.
-  Basically a switch statment right now.
-  Most of the work are delegated to each RenderableMesh's constructor
-  But eventually it will involve significant work in transforming
-  abstract mesh to renderable mesh.
-
-  This is the primary place that the user uses GPU compute to
-  accelerate data transformation and mesh generation. If the user
-  choose to do GPU compute here, he can use the existing drawing
-  context and keep the outputs on the GPU.
-
-  Note: abstract mesh does not need to be a 1-on-1 match with
-  renderable match */
-
-  // TODO: this should be where the MeshGenerator class kicks in.
-  // Mesh->RendereableMesh generation should be like:
-  // currentRenderableMesh = Text2dMeshGenerator.generate(mesh)
-  generateRenderableMeshes(mesh) {
-    let currentRenderableMesh;
-
-    switch (mesh.constructor) {
-    case Spheres:
-    case Circles:
-    case TriangleMesh:
-    case Text2d:
-      currentRenderableMesh = new WebGLTriangles({
-        triangles: mesh,
-        renderer: this
-      });
-      break;
-    case Lines:
-      currentRenderableMesh = new WebGLLines({
-        lines: mesh,
-        renderer: this
-      });
-      break;
-    default:
-      console.log('WebGL2Renderer.generateRenderableMeshes(). Unknown type of mesh!');
-    }
-
-    return currentRenderableMesh;
-  }
 }

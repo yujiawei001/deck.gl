@@ -8,7 +8,7 @@ export default class WebGL2Triangles extends WebGL2RenderableMesh {
     super({mesh: triangles, renderer});
 
     // Additional properties and properties required for instanced drawing
-    this._numberOfInstances = triangles.properties.get('position').hostData.length / 3;
+    this.numberOfInstances = triangles.properties.get('position').hostData.length / 3;
 
     // All renderable mesh need to have vertice position, texture coords, vertex color and vertex indices
 
@@ -91,7 +91,7 @@ export default class WebGL2Triangles extends WebGL2RenderableMesh {
     }
     `;
 
-    this._programID = this.renderer.programManager.newProgramFromShaders({
+    this.programID = this.renderer.programManager.newProgramFromShaders({
       vsSource,
       fsSource
     });
@@ -100,13 +100,13 @@ export default class WebGL2Triangles extends WebGL2RenderableMesh {
   render(cameraUniforms) {
     super.render(cameraUniforms);
 
-    if (this._uint32Indices === true) {
+    if (this.uint32Indices === true) {
       this.renderer.glContext.drawElementsInstanced(
-        GL.TRIANGLES, this._numberOfVertices, GL.UNSIGNED_INT, 0, this._numberOfInstances
+        GL.TRIANGLES, this.numberOfVertices, GL.UNSIGNED_INT, 0, this.numberOfInstances
         );
     } else {
       this.renderer.glContext.drawElementsInstanced(
-        GL.TRIANGLES, this._numberOfVertices, GL.UNSIGNED_SHORT, 0, this._numberOfInstances
+        GL.TRIANGLES, this.numberOfVertices, GL.UNSIGNED_SHORT, 0, this.numberOfInstances
         );
     }
   }

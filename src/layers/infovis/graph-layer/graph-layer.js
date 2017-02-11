@@ -69,9 +69,9 @@ export default class GraphLayer extends Layer {
 
       position[minIndex][2] = -20.0;
 
-      this.state.meshes.get(`${this.id}.nodes`).updateProperty({
-        propertyID: 'position',
-        data: position
+      this.state.meshes.get(`${this.id}.nodes`).updateProperties({
+        propertyIDs: ['position'],
+        data: [position]
       });
 
       const pickingResult = {
@@ -123,6 +123,7 @@ export default class GraphLayer extends Layer {
     for (let i = 0; i < getNodePosition().length; i++) {
       textArray[i] = i.toString();
     }
+
     // /* We can add rotation here */
     // const rotationQuat = new Array(getNodePosition().length);
     // for (let i = 0; i < getNodePosition().length; i++) {
@@ -136,10 +137,12 @@ export default class GraphLayer extends Layer {
     //   ));
     // }
 
+    // this.rotationQuat = rotationQuat;
+
     const text = new Text2d({
       position: getNodePosition().map(x => [x[0], x[1] - 0.7, x[2]]), // put text labels above nodes
       color: getNodeColor(),
-      size: getNodeSize().map(x => x * 3), // a bit larger than node size
+      size: getNodeSize().map(x => Math.random() * 2), // a bit larger than node size
       id: `${this.id}.labels`,
       texts: textArray,
       cameraID: this.props.cameraID

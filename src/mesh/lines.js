@@ -1,31 +1,35 @@
-import {Mesh} from './mesh';
-import {flatten2D} from '../lib/utils/flatten';
+import {Mesh, MeshProperty} from './mesh';
 
 export default class Lines extends Mesh {
-  constructor({vertices, texCoords, color, index, id, cameraID = 'default-cam', width = 1.0}) {
+  constructor({vertices, color, index, id, cameraID = 'default-cam', width = 1.0}) {
     super({id, cameraID});
 
-    this.properties.get('vertices').hostData = new Float32Array(flatten2D(vertices));
-    this.properties.get('normals').hostData = new Float32Array(flatten2D(vertices));
-    this.properties.get('texCoords').hostData = texCoords !== undefined ? texCoords : new Float32Array(vertices.length * 2);
-    this.properties.get('color').hostData = new Float32Array(flatten2D(color));
+    this.properties.set('vertices', new MeshProperty({id: 'vertices', hostData: vertices}));
+    this.properties.set('color', new MeshProperty({id: 'color', hostData: color}));
 
-    // this.properties.get('instancePosition').hostData = new Float32Array([0, 0, 0]);
-    // this.properties.get('instanceColor').hostData = new Float32Array([0, 0, 0, 0]);
-    // this.properties.get('instanceScale').hostData = new Float32Array([1]);
-    // this.properties.get('instanceRotation').hostData = new Float32Array([0, 0, 0, 1]);
+    const stubTexCoords = new Array(vertices.length);
+    const stubNormals = new Array(vertices.length);
+    for (let i = 0; i < vertices.length; i++) {
+      stubTexCoords[i] = [0, 0];
+      stubNormals[i] = [0, 0, 1];
+    }
+
+    this.properties.set('texCoords', new MeshProperty({id: 'texCoords', hostData: stubTexCoords}));
+    this.properties.set('normals', new MeshProperty({id: 'normals', hostData: stubNormals}));
 
     // if index is not provided, it means the user is expecting a non-indexed call.
     // right now, a pseudo-index array is generated to make the renderer simpler
+
     if (index === undefined) {
-      const indexSequence = new Uint32Array(vertices.length);
+      const indexSequence = new Array(vertices.length);
       for (let i = 0; i < indexSequence.length; i++) {
         indexSequence[i] = i;
       }
-      this.properties.get('index').hostData = indexSequence;
+      this.properties.set('index', new MeshProperty({id: 'index', hostData: indexSequence}));
     } else {
-      this.properties.get('index').hostData = new Uint32Array(flatten2D(index));
+      this.properties.set('index', new MeshProperty({id: 'index', hostData: index}));
     }
+
 
     this.width = width;
   }
