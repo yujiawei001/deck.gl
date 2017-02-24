@@ -8,16 +8,45 @@ import DelaunayCoverLayer from './wind-layer/delaunay-cover-layer';
 import ParticleLayer from './wind-layer/particle-layer';
 import {loadData} from './utils/load-data';
 
+import TWEEN from 'tween.js';
+
 export default class WindDemo extends Component {
 
   constructor(props) {
     super(props);
 
-    this.state = {data: null};
+    this.state = {
+      data: null
+    };
+
+    const particalState = {particalTime: 0};
+    this._particalAnimation = new TWEEN.Tween(particalState)
+      .to({particalTime: 60}, 1000)
+      .onUpdate(() => this.setState(particalState))
+      .repeat(Infinity);
   }
 
   componentDidMount() {
     loadData().then(data => this.setState({data}));
+
+    if (this.props.params.toggleParticles) {
+      this._particalAnimation.start();
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const {params: {toggleParticles}} = nextProps;
+    if (this.props.params.toggleParticles !== toggleParticles) {
+      if (toggleParticles) {
+        this._particalAnimation.start();
+      } else {
+        this._particalAnimation.stop();
+      }
+    }
+  }
+
+  componentWillUnmount() {
+    this._particalAnimation.stop();
   }
 
   render() {
