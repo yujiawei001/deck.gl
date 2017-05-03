@@ -32,9 +32,7 @@ if (global.deck && global.deck.VERSION !== version) {
 }
 
 if (!global.deck) {
-  /* global console */
-  /* eslint-disable no-console */
-  console.log(`deck.gl ${version} - ${STARTUP_MESSAGE}`);
+  console.log(`deck.gl ${version} - ${STARTUP_MESSAGE}`); // eslint-disable-line
 
   global.deck = global.deck || {
     VERSION: version,

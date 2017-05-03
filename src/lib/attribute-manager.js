@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/* eslint-disable guard-for-in */
 import {GL} from 'luma.gl';
 import {log} from './utils';
 import assert from 'assert';
@@ -28,8 +27,7 @@ const LOG_DETAIL_PRIORITY = 2;
 
 function noop() {}
 
-/* eslint-disable complexity */
-export function glArrayFromType(glType, {clamped = true} = {}) {
+export function glArrayFromType(glType, {clamped = true} = {}) { // eslint-disable-line complexity
   // Sorted in some order of likelihood to reduce amount of comparisons
   switch (glType) {
   case GL.FLOAT:
@@ -53,7 +51,6 @@ export function glArrayFromType(glType, {clamped = true} = {}) {
     throw new Error('Failed to deduce type from array');
   }
 }
-/* eslint-enable complexity */
 
 // Default loggers
 const logFunctions = {
@@ -446,7 +443,6 @@ export default class AttributeManager {
   // Update attribute buffers from any attributes in props
   // Detach any previously set buffers, marking all
   // Attributes for auto allocation
-  /* eslint-disable max-statements */
   _setExternalBuffers(bufferMap) {
     const {attributes, numInstances} = this;
 
@@ -473,7 +469,6 @@ export default class AttributeManager {
       }
     }
   }
-  /* eslint-enable max-statements */
 
   /* Checks that typed arrays for attributes are big enough
    * sets alloc flag if not
@@ -518,7 +513,6 @@ export default class AttributeManager {
    * @param {Object} opts.props - passed to updaters
    * @param {Object} opts.context - Used as "this" context for updaters
    */
-  /* eslint-disable max-statements, complexity */
   _updateBuffers({numInstances, data, props, context}) {
     const {attributes} = this;
 
@@ -577,7 +571,6 @@ export default class AttributeManager {
     attribute.changed = true;
     this.needsRedraw = true;
   }
-  /* eslint-enable max-statements */
 
   _updateBufferViaStandardAccessor({attribute, data, props}) {
     const {accessor, value, size} = attribute;
@@ -591,13 +584,11 @@ export default class AttributeManager {
     for (const object of data) {
       let objectValue = accessorFunc(object);
       objectValue = Array.isArray(objectValue) ? objectValue : [objectValue];
-      /* eslint-disable no-fallthrough, default-case */
-      switch (size) {
-      case 4: value[i + 3] = Number.isFinite(objectValue[3]) ? objectValue[3] : defaultValue[3];
-      case 3: value[i + 2] = Number.isFinite(objectValue[2]) ? objectValue[2] : defaultValue[2];
-      case 2: value[i + 1] = Number.isFinite(objectValue[1]) ? objectValue[1] : defaultValue[1];
-      case 1: value[i + 0] = Number.isFinite(objectValue[0]) ? objectValue[0] : defaultValue[0];
-      }
+
+      value[i + size - 1] = Number.isFinite(objectValue[size - 1]) ?
+        objectValue[size - 1] :
+        defaultValue[size - 1];
+
       i += size;
     }
   }

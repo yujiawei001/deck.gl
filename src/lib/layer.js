@@ -150,7 +150,7 @@ export default class Layer {
   // END LIFECYCLE METHODS
   // //////////////////////////////////////////////////
 
-  // Default implementation of attribute invalidation, can be redefine
+  // Default implementation of attribute invalidation, can be redefined
   invalidateAttribute(name = 'all') {
     if (name === 'all') {
       this.state.attributeManager.invalidateAll();
@@ -326,10 +326,9 @@ export default class Layer {
   // Should only be called by the deck.gl LayerManager class
 
   // Called by layer manager when a new layer is found
-  /* eslint-disable max-statements */
   initializeLayer(updateParams) {
     assert(this.context.gl, 'Layer context missing gl');
-    assert(!this.state, 'Layer missing state');
+    // assert(!this.state, 'Layer missing state');
 
     this.state = {};
 
@@ -397,7 +396,6 @@ export default class Layer {
       }
     }
   }
-  /* eslint-enable max-statements */
 
   // Called by manager when layer is about to be disposed
   // Note: not guaranteed to be called on application shutdown
@@ -495,7 +493,6 @@ export default class Layer {
 
   // Checks if any update triggers have changed, and invalidate
   // attributes accordingly.
-  /* eslint-disable max-statements */
   _diffUpdateTriggers(oldProps, newProps) {
     // const {attributeManager} = this.state;
     // const updateTriggerMap = attributeManager.getUpdateTriggerMap();
@@ -526,7 +523,6 @@ export default class Layer {
 
     return change;
   }
-  /* eslint-enable max-statements */
 
   _checkRequiredProp(propertyName, condition) {
     const value = this.props[propertyName];

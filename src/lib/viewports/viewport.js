@@ -55,7 +55,6 @@ export default class Viewport {
    * @param {Number} opt.longitude - Center of viewport on map (alternative to opt.center)
    * @param {Number} opt.zoom - Scale = Math.pow(2,zoom) on map (alternative to opt.scale)
    */
-  /* eslint-disable complexity */
   constructor({
     // Window width/height in pixels (for pixel projection)
     width = 1,
@@ -111,7 +110,6 @@ export default class Viewport {
     this.unprojectFlat = this.unprojectFlat.bind(this);
     this.getMatrices = this.getMatrices.bind(this);
   }
-  /* eslint-enable complexity */
 
   // Two viewports are equal if width and height are identical, and if
   // their view and projection matrices are (approximately) equal.

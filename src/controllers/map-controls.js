@@ -46,7 +46,6 @@ const MAX_ZOOM = 40;
 const PITCH_MOUSE_THRESHOLD = 5;
 const PITCH_ACCEL = 1.2;
 
-/* eslint-disable no-inline-comments */
 const propTypes = {
   width: PropTypes.number.isRequired, // The width of the map
   height: PropTypes.number.isRequired, // The height of the map
@@ -280,8 +279,10 @@ export default class MapControls extends PureComponent {
     // take the start lnglat and put it where the mouse is down.
     if (!startDragLngLat) {
       console.log( // eslint-disable-line
-        startDragLngLat, '`startDragLngLat` prop is required ' +
-        'for mouse drag behavior to calculate where to position the map.');
+        startDragLngLat,
+        '`startDragLngLat` prop is required for mouse drag behavior',
+        'in order to calculate where to position the map.'
+      );
       return;
     }
     // assert(startDragLngLat, '`startDragLngLat` prop is required ' +
@@ -303,13 +304,11 @@ export default class MapControls extends PureComponent {
 
     const {startBearing, startPitch} = this.props;
     if (typeof startBearing !== 'number') {
-      console.error( // eslint-disable-line
-        '`startBearing` prop is required for mouse rotate behavior');
+      console.error('`startBearing` prop is required for mouse rotate behavior'); // eslint-disable-line
       return;
     }
     if (typeof startPitch !== 'number') {
-      console.error( // eslint-disable-line
-        '`startPitch` prop is required for mouse rotate behavior');
+      console.error('`startPitch` prop is required for mouse rotate behavior'); // eslint-disable-line
       return;
     }
 

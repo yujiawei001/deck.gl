@@ -59,11 +59,9 @@ export function flattenVertices(nestedArray, {result = [], dimensions = 3} = {})
     const value = nestedArray[index];
     if (Array.isArray(value) || ArrayBuffer.isView(value)) {
       flattenVertices(value, {result, dimensions});
-    } else {
-      if (vertexLength < dimensions) { // eslint-disable-line
-        result.push(value);
-        vertexLength++;
-      }
+    } else if (vertexLength < dimensions) {
+      result.push(value);
+      vertexLength++;
     }
   }
   // Add a third coordinate if needed
@@ -110,11 +108,9 @@ export function flattenTypedVertices(nestedArray, {
     const value = nestedArray[index];
     if (Array.isArray(value) || ArrayBuffer.isView(value)) {
       start = flattenTypedVertices(value, {result, start, dimensions});
-    } else {
-      if (vertexLength < dimensions) { // eslint-disable-line
-        result[start++] = value;
-        vertexLength++;
-      }
+    } else if (vertexLength < dimensions) {
+      result[start++] = value;
+      vertexLength++;
     }
   }
   // Add a third coordinate if needed

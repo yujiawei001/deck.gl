@@ -182,11 +182,9 @@ export function flattenVertices2(nestedArray, {result = [], dimensions = 3} = {}
     const value = get(nestedArray, index);
     if (isContainer(value)) {
       flattenVertices(value, {result, dimensions});
-    } else {
-      if (vertexLength < dimensions) { // eslint-disable-line
-        result.push(value);
-        vertexLength++;
-      }
+    } else if (vertexLength < dimensions) {
+      result.push(value);
+      vertexLength++;
     }
   }
   // Add a third coordinate if needed

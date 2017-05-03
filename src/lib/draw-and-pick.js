@@ -18,18 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/* global window */
 import {GL, glContextWithState} from 'luma.gl';
 import {getUniformsFromViewport} from './viewport-uniforms';
 import {log, getBlendMode, setBlendMode} from './utils';
+import {window} from './utils/globals';
 
+let renderCount = 0;
+const EMPTY_PIXEL = new Uint8Array(4);
 // Note: corresponding touch events, once supported, should be included here as well.
 const MOTION_EVENTS = [
   'dragmove',
   'dragend'
 ];
-const EMPTY_PIXEL = new Uint8Array(4);
-let renderCount = 0;
 
 export function drawLayers({layers, pass}) {
   log.log(3, `DRAWING ${layers.length} layers`);
@@ -55,7 +55,7 @@ export function drawLayers({layers, pass}) {
     ${visibleCount} visible, ${layers.length} total`);
 }
 
-/* eslint-disable max-depth, max-statements */
+/* eslint-disable max-statements,max-depth */
 export function pickLayers(gl, {
   layers,
   pickingFBO,
@@ -69,8 +69,7 @@ export function pickLayers(gl, {
 
   // Convert from canvas top-left to WebGL bottom-left coordinates
   // And compensate for pixelRatio
-  const pixelRatio = typeof window !== 'undefined' ?
-    window.devicePixelRatio : 1;
+  const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio : 1;
   const deviceX = x * pixelRatio;
   const deviceY = gl.canvas.height - y * pixelRatio;
 
@@ -204,7 +203,7 @@ export function pickLayers(gl, {
 
   return unhandledPickInfos;
 }
-/* eslint-enable max-depth, max-statements */
+/* eslint-enable max-statements,max-depth */
 
 function pickFromBuffer(gl, {
   layers,

@@ -2,9 +2,8 @@
 // Handle keyboard/mouse/touch events in the Canvas
 // TODO - this will not work under node
 
-/* eslint-disable dot-notation, max-statements, no-loop-func */
-/* global window, document */
 import {noop} from '../utils';
+import {window, document} from '../utils/globals';
 
 const KEYS = {
   enter: 13,
@@ -147,7 +146,7 @@ export class EventsProxy {
         type = 'DOMMouseScroll';
       }
       domElem.addEventListener(type, (e, win) => {
-        this['mousewheel'](this.eventInfo('mousewheel', e, win));
+        this.mousewheel(this.eventInfo('mousewheel', e, win));
       }, false);
     }
 
@@ -168,22 +167,17 @@ export class EventsProxy {
     }
   }
 
-  eventInfo(type, e, win) {
-    const domElem = this.domElem;
-    const scene = this.scene;
-    const opt = this.opt;
+  transformPositions(epos, pos) {
+    const {relative, centerOrigin} = this.opt;
+
+    if (!relative || !centerOrigin) {
+      return;
+    }
+
     const size = this.getSize();
-    const relative = opt.relative;
-    const centerOrigin = opt.centerOrigin;
-    const pos = opt.cachePosition && this.pos || _getPos(domElem);
-    const ge = get(e, win);
-    const epos = getPos(e, win);
-    const origPos = {x: epos[0].x, y: epos[0].y};
-    const evt = {};
     let x;
     let y;
 
-    // get Position
     for (let i = 0, l = epos.length; i < l; ++i) {
       x = epos[i].x;
       y = epos[i].y;
@@ -199,6 +193,19 @@ export class EventsProxy {
       epos[i].x = x;
       epos[i].y = y;
     }
+  }
+
+  eventInfo(type, e, win) {
+    const domElem = this.domElem;
+    const scene = this.scene;
+    const opt = this.opt;
+    const pos = opt.cachePosition && this.pos || _getPos(domElem);
+    const ge = get(e, win);
+    const epos = getPos(e, win);
+    const origPos = {x: epos[0].x, y: epos[0].y};
+    const evt = {};
+
+    this.transformPositions(epos, pos);
 
     switch (type) {
     case 'mousewheel':

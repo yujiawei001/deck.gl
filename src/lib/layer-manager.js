@@ -44,8 +44,7 @@
 // cycle.  The new layer ends up with the state of the old layer (and the
 // props of the new layer), while the old layer is simply discarded for
 // garbage collecion.
-//
-/* eslint-disable no-try-catch */
+
 import Layer from './layer';
 import {log} from './utils';
 import assert from 'assert';
@@ -112,7 +111,6 @@ export default class LayerManager {
   }
 
   updateLayers({newLayers}) {
-    /* eslint-disable */
     assert(this.context.viewport,
       'LayerManager.updateLayers: viewport not set');
 
@@ -146,7 +144,7 @@ export default class LayerManager {
   }
 
   pickLayer({x, y, mode}) {
-    const {gl, uniforms} = this.context;
+    const {gl} = this.context;
 
     // Set up a frame buffer if needed
     if (this.context.pickingFBO === null ||
@@ -162,7 +160,7 @@ export default class LayerManager {
       y,
       uniforms: {
         renderPickingBuffer: true,
-        picking_uEnable: true
+        picking_uEnable: true // eslint-disable-line camelcase
       },
       layers: this.layers,
       mode,
@@ -186,10 +184,8 @@ export default class LayerManager {
         this.screenCleared = true;
         return true;
       }
-    } else {
-      if (this.screenCleared === true) {
-        this.screenCleared = false;
-      }
+    } else if (this.screenCleared === true) {
+      this.screenCleared = false;
     }
 
     for (const layer of this.layers) {
@@ -225,8 +221,6 @@ export default class LayerManager {
     const firstError = error || error2;
     return {error: firstError, generatedLayers};
   }
-
-  /* eslint-disable max-statements */
 
   _matchSublayers({newLayers, oldLayerMap, generatedLayers}) {
     // Filter out any null layers

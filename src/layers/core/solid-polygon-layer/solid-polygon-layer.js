@@ -77,15 +77,19 @@ export default class SolidPolygonLayer extends Layer {
 
     const {attributeManager} = this.state;
     const noAlloc = true;
-    /* eslint-disable max-len */
     attributeManager.add({
       indices: {size: 1, isIndexed: true, update: this.calculateIndices, noAlloc},
       positions: {size: 3, accessor: 'getElevation', update: this.calculatePositions, noAlloc},
       normals: {size: 3, update: this.calculateNormals, noAlloc},
-      colors: {size: 4, type: GL.UNSIGNED_BYTE, accessor: 'getColor', update: this.calculateColors, noAlloc},
+      colors: {
+        size: 4,
+        type: GL.UNSIGNED_BYTE,
+        accessor: 'getColor',
+        update: this.calculateColors,
+        noAlloc
+      },
       pickingColors: {size: 3, type: GL.UNSIGNED_BYTE, update: this.calculatePickingColors, noAlloc}
     });
-    /* eslint-enable max-len */
   }
 
   updateAttribute({props, oldProps, changeFlags}) {

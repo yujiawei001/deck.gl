@@ -76,28 +76,18 @@ export default class WebMercatorViewport extends Viewport {
    *    division by zero. This is intended to reduce the burden of apps to
    *    to check values before instantiating a Viewport.
    */
-  /* eslint-disable complexity, max-statements */
   constructor({
     // Map state
-    width,
-    height,
-    latitude,
-    longitude,
-    zoom,
-    pitch,
-    bearing,
-    altitude,
+    width = DEFAULT_MAP_STATE.width,
+    height = DEFAULT_MAP_STATE.height,
+    latitude = DEFAULT_MAP_STATE.latitude,
+    longitude = DEFAULT_MAP_STATE.longitude,
+    zoom = DEFAULT_MAP_STATE.zoom,
+    pitch = DEFAULT_MAP_STATE.pitch,
+    bearing = DEFAULT_MAP_STATE.bearing,
+    altitude = DEFAULT_MAP_STATE.altitude,
     farZMultiplier = 10
   } = {}) {
-    // Viewport - support undefined arguments
-    width = width !== undefined ? width : DEFAULT_MAP_STATE.width;
-    height = height !== undefined ? height : DEFAULT_MAP_STATE.height;
-    zoom = zoom !== undefined ? zoom : DEFAULT_MAP_STATE.zoom;
-    latitude = latitude !== undefined ? latitude : DEFAULT_MAP_STATE.latitude;
-    longitude = longitude !== undefined ? longitude : DEFAULT_MAP_STATE.longitude;
-    bearing = bearing !== undefined ? bearing : DEFAULT_MAP_STATE.bearing;
-    pitch = pitch !== undefined ? pitch : DEFAULT_MAP_STATE.pitch;
-    altitude = altitude !== undefined ? altitude : DEFAULT_MAP_STATE.altitude;
 
     // Silently allow apps to send in 0,0 to facilitate isomorphic render etc
     width = width || 1;
@@ -165,7 +155,6 @@ export default class WebMercatorViewport extends Viewport {
 
     Object.freeze(this);
   }
-  /* eslint-enable complexity, max-statements */
 
   /**
    * Project [lng,lat] on sphere onto [x,y] on 512*512 Mercator Zoom 0 tile.
