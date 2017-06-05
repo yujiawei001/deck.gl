@@ -45,14 +45,14 @@ void main(void) {
   );
   float a = texColor.a * opacity * mix(1.0, vColor.a, vColorMode);
 
-  if (a < MIN_ALPHA) {
-    discard;
-  }
+  // if (a < MIN_ALPHA) {
+  //   discard;
+  // }
 
   // if rendering to screen, use mixed alpha
   // if rendering picking buffer, use binary alpha
   a = mix(a, 1.0, renderPickingBuffer);
 
-  gl_FragColor = vec4(color, a);
+  gl_FragColor = vec4(color, 1.0);
 }
 `;

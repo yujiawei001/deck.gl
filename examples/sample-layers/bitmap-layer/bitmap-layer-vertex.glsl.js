@@ -9,10 +9,10 @@ attribute vec2 instanceAngle;
 attribute float instanceBitmapType;
 attribute vec3 instancePickingColors;
 
-uniform float opacity;
 uniform vec2 imageSize;
 uniform float renderPickingBuffer;
 uniform float layerIndex;
+uniform float flipY;
 
 varying vec2 vTexCoord;
 varying float vBitmapType;
@@ -20,7 +20,8 @@ varying vec4 vPickingColor;
 
 void main(void) {
   vec2 offset = instancePositions.wz;
-  vec2 cornerPosition = instancePositions.xy + positions.xy * imageSize;
+  vec2 flipTransform = vec2(1.0, 1.0 - flipY * 2.0);
+  vec2 cornerPosition = instancePositions.xy + flipTransform * positions.xy * imageSize;
 
   // Rotate and scale primitive vertex
   // float angle = instanceAngle.x;
@@ -30,9 +31,7 @@ void main(void) {
   vec2 vertex = project_position(cornerPosition);
 
   // Apply projection matrix
-  gl_Position = project_to_clipspace(
-    vec4(vertex, layerIndex * -0.01, 1.0)
-  );
+  gl_Position = project_to_clipspace(vec4(vertex, 0.0, 1.0));
 
   vTexCoord = texCoords;
   vBitmapType = instanceBitmapType;

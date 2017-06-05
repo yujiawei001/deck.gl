@@ -1,4 +1,4 @@
-export default `\
+export default `
 #define SHADER_NAME mesh-layer-vs
 
 // Scale the model to meters
@@ -6,6 +6,7 @@ uniform float meterScale;
 
 // Primitive attributes
 attribute vec3 positions;
+attribute vec3 normals;
 attribute vec2 texCoords;
 
 // Instance attributes
@@ -13,11 +14,10 @@ attribute vec3 instancePositions;
 attribute float instanceAngles;
 attribute vec3 instancePickingColors;
 
-uniform float renderPickingBuffer;
-
 // Outputs to fragment shader
-varying vec3 vColor;
+varying vec4 vPickingColor;
 varying vec2 vTexCoord;
+varying float vLightWeight;
 
 void main(void) {
   float angle = instanceAngles;
@@ -28,7 +28,8 @@ void main(void) {
 
   gl_Position = project_to_clipspace(vec4(p, 1.0));
 
-  vColor = instancePickingColors / 255.0;
+  vPickingColor = vec4(instancePickingColors / 255.0, 1.0);
   vTexCoord = texCoords;
+  vLightWeight = getLightWeight(p, normals);
 }
 `;

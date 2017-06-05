@@ -24,10 +24,24 @@ varying float vBitmapType;
 varying vec4 vPickingColor;
 
 uniform float desaturate;
+uniform vec4 transparentColor;
+uniform vec3 tintColor;
+uniform float opacity;
 
-vec4 color_desaturate(vec4 color) {
+// apply desaturation
+vec3 color_desaturate(vec3 color) {
   float luminance = (color.r + color.g + color.b) * 0.333333333;
-  return mix(color, vec4(luminance, luminance, luminance, color.a), desaturate);
+  return mix(color, vec3(luminance), desaturate);
+}
+
+// apply tint
+vec3 color_tint(vec3 color) {
+  return color * tintColor / 255.0;
+}
+
+// blend with background color
+vec4 apply_opacity(vec3 color, float alpha) {
+  return mix(transparentColor / 255.0, vec4(color, 1.0), alpha);
 }
 
 void main(void) {
@@ -57,13 +71,12 @@ void main(void) {
     bitmapColor = texture2D(uBitmap0, vTexCoord);
   }
 
-  if (bitmapColor.rgba == vec4(0., 0., 0., 1.)) {
+  if (bitmapColor == vec4(0., 0., 0., 1.)) {
     discard;
   }
 
-
   gl_FragColor = mix(
-    color_desaturate(bitmapColor),
+    apply_opacity(color_tint(color_desaturate(bitmapColor.rgb)), bitmapColor.a * opacity),
     vPickingColor,
     renderPickingBuffer
   );

@@ -1,4 +1,4 @@
-    // Copyright (c) 2015 - 2017 Uber Technologies, Inc.
+// Copyright (c) 2015 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,29 +23,25 @@ import {GL, Model, Geometry, Texture2D} from 'luma.gl';
 import meshLayerVertex from './mesh-layer-vertex.glsl';
 import meshLayerFragment from './mesh-layer-fragment.glsl';
 
-// TODO - hack. Why is this here? remove.
-let texture = null;
-
 function degreeToRadian(degree) {
   return degree * (Math.PI / 180);
 }
+
+const layerName = 'MeshLayer';
 
 const defaultProps = {
   getPosition: x => x.position,
   getAngleDegreesCW: x => x.angle || 0,
   getColor: x => x.color || [0, 0, 255],
-  mesh: null,
-  textureUrl: null,
-  meterScale: 1
+  desaturate: 0,
+  brightness: 0,
+  meterScale: 1,
+  mesh: {},
+  texture: null,
+  lightSettings: {}
 };
 
 export default class MeshLayer extends Layer {
-  getShaders() {
-    return {
-      vs: meshLayerVertex,
-      fs: meshLayerFragment
-    };
-  }
 
   initializeState() {
     const {gl} = this.context;
@@ -58,53 +54,71 @@ export default class MeshLayer extends Layer {
     });
   }
 
-  updateState({props}) {
-    const {meterScale} = props;
-    this.setUniforms({meterScale});
-    if (texture) {
-      this.setUniforms({sampler1: texture});
-    }
+  updateState({props, oldProps}) {
+    const {meterScale, desaturate, brightness} = props;
+    this.setUniforms({meterScale, desaturate, brightness});
 
     if (this.state.dataChanged && this.state.attributeManager) {
       this.state.attributeManager.invalidateAll();
     }
+    if (props.texture !== oldProps.texture) {
+      this.loadTexture(props.texture);
+    }
+    if (props.lightSettings !== oldProps.lightSettings) {
+      this.setUniforms(props.lightSettings);
+    }
   }
 
   getModel(gl) {
-    const shaders = assembleShaders(gl, this.getShaders());
-
-    // TODO - this should not be done here
     gl.enable(GL.DEPTH_TEST);
     gl.depthFunc(GL.LEQUAL);
 
     const model = new Model({
       gl,
       id: this.props.id,
-      vs: shaders.vs,
-      fs: shaders.fs,
+      ...assembleShaders(gl, {
+        vs: meshLayerVertex,
+        fs: meshLayerFragment,
+        modules: ['lighting'],
+        shaderCache: this.context.shaderCache
+      }),
       geometry: new Geometry({
         drawMode: GL.TRIANGLES,
-        indices: new Uint16Array(this.props.mesh.indices),
-        positions: new Float32Array(this.props.mesh.vertices),
-        normals: new Float32Array(this.props.mesh.vertexNormals),
-        texCoords: new Float32Array(this.props.mesh.textures)
+        indices: this.props.mesh.indices,
+        positions: this.props.mesh.vertices,
+        normals: this.props.mesh.vertexNormals,
+        texCoords: this.props.mesh.textures
       }),
       isInstanced: true
     });
 
-    /* global Image */
-    const image = new Image();
-
-    image.crossOrigin = 'Anonymous';
-    image.src = this.props.textureUrl;
-    image.onload = () => {
-      texture = new Texture2D(gl).setImageData({data: image});
-      model.setUniforms({sampler1: texture});
-    };
-    image.onerror = () => {
-      throw new Error('Could not load texture.');
-    };
     return model;
+  }
+
+  loadTexture(texture) {
+    const {gl} = this.context;
+    const {model} = this.state;
+
+    if (typeof texture === 'string') {
+      // Url, load the image
+
+      /* global Image */
+      const image = new Image();
+
+      image.crossOrigin = 'Anonymous';
+      image.src = texture;
+      image.onload = () => {
+        texture = new Texture2D(gl).setImageData({data: image});
+        model.setUniforms({sampler1: texture});
+      };
+      image.onerror = () => {
+        throw new Error('Could not load texture.');
+      };
+    } else if (texture instanceof Texture2D) {
+      model.setUniforms({sampler1: texture});
+    } else {
+      model.setUniforms({sampler1: new Texture2D(gl, {data: texture})});
+    }
   }
 
   calculateInstancePositions(attribute) {
@@ -132,5 +146,5 @@ export default class MeshLayer extends Layer {
   }
 }
 
-MeshLayer.layerName = 'MeshLayer';
+MeshLayer.layerName = layerName;
 MeshLayer.defaultProps = defaultProps;

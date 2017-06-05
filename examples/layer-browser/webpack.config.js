@@ -11,8 +11,6 @@ module.exports = {
     app: resolve('./src/app.js')
   },
 
-  devtool: 'source-map',
-
   resolve: {
     // Make src files outside of this dir resolve modules in our node_modules folder
     modules: [resolve(__dirname, '.'), resolve(__dirname, 'node_modules'), 'node_modules'],
@@ -37,18 +35,6 @@ module.exports = {
             dangerousForOf: true // Use for/of in spite of buble's limitations
           }
         }
-      },
-      {
-        // The example has some JSON data
-        test: /\.json$/,
-        loader: 'json-loader',
-        exclude: [/node_modules/]
-      },
-      {
-        // Needed to inline deck.gl GLSL shaders
-        include: [resolve(__dirname, '../sample-layers')],
-        loader: 'transform-loader',
-        options: 'brfs-babel'
       }
     ]
   },

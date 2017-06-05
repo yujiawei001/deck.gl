@@ -1,4 +1,4 @@
-// Copyright (c) 2015 - 2017 Uber Technologies, Inc.
+// Copyright (c) 2015 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,12 +35,20 @@ function degreeToRadian(degree) {
 // loss of precision during subtraction
 const globalTimestamp = new Date();
 
+const layerName = 'BitmapLayer';
+
 const defaultProps = {
-  // core props
   images: [],
   imageSize: [1, 1],
   desaturate: 0,
+  blendMode: null,
+  // More context: because of the blending mode we're using for ground imagery,
+  // alpha is not effective when blending the bitmap layers with the base map.
+  // Instead we need to manually dim/blend rgb values with a background color.
+  transparentColor: [0, 0, 0, 0],
+  tintColor: [255, 255, 255],
   scale: 1,
+  flipY: 0,
   // animation props
   time: 0,
   angularVelocityMultiplier: 1,
@@ -53,13 +61,14 @@ const defaultProps = {
   getEndTime: x => globalTimestamp + 1
 };
 
+/*
+ * @class
+ * @param {object} props
+ * @param {number} props.scale - point scale
+ * @param {number} props.transparentColor - color to interpret transparency to
+ * @param {number} props.tintColor - color bias
+ */
 export default class BitmapLayer extends Layer {
-  getShaders() {
-    return {
-      vs: BITMAP_VERTEX_SHADER,
-      fs: BITMAP_FRAGMENT_SHADER
-    };
-  }
 
   initializeState() {
     const {gl} = this.context;
@@ -73,7 +82,6 @@ export default class BitmapLayer extends Layer {
       instanceBitmapType: {size: 1, update: this.calculateInstanceBitmapType}
     });
 
-    this.loadMapImagesToTextures();
   }
 
   updateState({props, oldProps}) {
@@ -91,8 +99,8 @@ export default class BitmapLayer extends Layer {
       }
     }
     this.calculateRadius();
-    const {imageSize, desaturate} = props;
-    this.setUniforms({imageSize, desaturate});
+    const {imageSize, desaturate, flipY} = props;
+    this.setUniforms({imageSize, desaturate, flipY});
   }
 
   calculateRadius(props) {
@@ -126,13 +134,14 @@ export default class BitmapLayer extends Layer {
       texCoords.push(vertex[0] / 2 + 0.5, -vertex[1] / 2 + 0.5);
     });
 
-    const shaders = assembleShaders(gl, this.getShaders());
-
     const model = new Model({
       gl,
       id: this.props.id,
-      vs: shaders.vs,
-      fs: shaders.fs,
+      ...assembleShaders(gl, {
+        vs: BITMAP_VERTEX_SHADER,
+        fs: BITMAP_FRAGMENT_SHADER,
+        shaderCache: this.context.shaderCache
+      }),
       geometry: new Geometry({
         drawMode: GL.TRIANGLES,
         positions: new Float32Array(positions),
@@ -144,6 +153,46 @@ export default class BitmapLayer extends Layer {
     return model;
   }
 
+  draw({uniforms}) {
+    const {gl} = this.context;
+
+    // TODO/ib - Setting blend mode here defeats picking as currently implemented in deck.gl
+    const {blendMode, transparentColor, tintColor} = this.props;
+    if (!uniforms.renderPickingBuffer && blendMode) {
+      gl.blendFunc(...blendMode.func);
+      gl.blendEquation(blendMode.equation);
+    }
+
+    // Resolve z-fighting and drawing order
+    // New pixels must be drawn on top of old
+    gl.enable(gl.POLYGON_OFFSET_FILL);
+    // https://www.opengl.org/archives/resources/faq/technical/polygonoffset.htm
+    // Polygon offset allows the application to specify a depth offset with two
+    // parameters, factor and units. factor scales the maximum Z slope, with
+    // respect to X or Y of the polygon, and units scales the minimum resolvable
+    // depth buffer value. The results are summed to produce the depth offset.
+
+    // 200 is an arbitrary number to ensure that factor is positive
+    // Otherwise ground image will occlude lanes
+    gl.polygonOffset(200 - uniforms.layerIndex, 1);
+
+    // Render the image
+    this.state.model.render({
+      ...uniforms,
+      transparentColor,
+      tintColor
+    });
+
+    // Restore context state
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+
+    // TODO/ib - Setting blend mode here defeats picking as currently implemented in deck.gl
+    if (!uniforms.renderPickingBuffer && blendMode) {
+      gl.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
+      gl.blendEquation(GL.FUNC_ADD);
+    }
+  }
+
   loadTexture(gl, model, bitmapName, filename) {
     /* global Image */
     const image = new Image();
@@ -152,7 +201,11 @@ export default class BitmapLayer extends Layer {
       model.setUniforms({
         [bitmapName]: new Texture2D(gl, {
           unpackFlipY: false
-        }).setImageData({data: image})
+        }).setImageData({
+          data: image,
+          magFilter: GL.LINEAR,
+          minFilter: GL.LINEAR
+        })
       });
     };
     image.onerror = (error = '') => {
@@ -174,7 +227,7 @@ export default class BitmapLayer extends Layer {
       } else if (image instanceof Texture2D) {
         model.setUniforms({[`uBitmap${i}`]: image});
       } else {
-        model.setUniforms({[`uBitmap${i}`]: new Texture2D(gl)});
+        model.setUniforms({[`uBitmap${i}`]: new Texture2D(gl, {data: image})});
       }
     }
   }
@@ -240,5 +293,5 @@ export default class BitmapLayer extends Layer {
   }
 }
 
-BitmapLayer.layerName = 'BitmapLayer';
+BitmapLayer.layerName = layerName;
 BitmapLayer.defaultProps = defaultProps;
