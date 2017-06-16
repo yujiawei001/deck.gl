@@ -1,7 +1,8 @@
 language: node_js
-dist: precise
+dist: trusty
 os: linux
 group: stable
+compiler: g++
 node_js:
   - 6.9.1
   - 7
