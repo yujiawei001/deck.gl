@@ -12,6 +12,6 @@ node_js:
   - 7
 script:
   - npm run lint
-  - npm run fast-test
+  - npm run test-fast
 after_success:
   - cat coverage/lcov.info | coveralls
