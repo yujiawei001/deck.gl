@@ -1,7 +1,12 @@
 language: node_js
+dist: trusty
 os: linux
 group: stable
 compiler: g++
+addons:
+  apt:
+    packages:
+      - libxi-dev
 node_js:
   - 6.9.1
   - 7
