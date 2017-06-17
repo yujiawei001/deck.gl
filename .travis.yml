@@ -1,5 +1,4 @@
 language: node_js
-dist: trusty
 os: linux
 group: stable
 compiler: g++
@@ -8,6 +7,6 @@ node_js:
   - 7
 script:
   - npm run lint
-  - npm run cover
+  - npm run fast-test
 after_success:
   - cat coverage/lcov.info | coveralls
