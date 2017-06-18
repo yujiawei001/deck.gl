@@ -18,10 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './layers';
 import './imports-spec';
 import './lib';
 import './utils';
+import './debug/seer-integration.spec';
+
+import './layers';
+
 import './experimental';
 import './deprecated';
-import './debug/seer-integration.spec';
