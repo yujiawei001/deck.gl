@@ -19,11 +19,10 @@
 // THE SOFTWARE.
 
 import {WebMercatorViewport} from '../src/lib/viewports';
-import {TEST_EXPORTS as LAYER_TEST_EXPORTS} from '../src/lib/layer';
+import {mergeDefaultProps} from '../src/lib/props';
 import spy from 'spy';
 import global from 'global';
 
-const {mergeDefaultProps} = LAYER_TEST_EXPORTS;
 import {experimental} from 'luma.gl';
 
 /**

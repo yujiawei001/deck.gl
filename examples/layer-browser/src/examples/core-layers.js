@@ -13,15 +13,33 @@ import {
 
   GeoJsonLayer,
   PolygonLayer,
-  PathLayer
+  PathLayer,
+
+  COORDINATE_SYSTEM
 } from 'deck.gl';
 
-// Demonstrate immutable support
+import {parseColor, setOpacity} from '../utils/color';
+
+// TODO - we have given up on immutable support
 import {experimental} from 'deck.gl';
 const {get} = experimental;
-
 import dataSamples from '../immutable-data-samples';
-import {parseColor, setOpacity} from '../utils/color';
+
+// Point cloud data as pregenerated attributes
+// using the PointCloudLayer's AttributeManager
+// NOTE this is a new and experimental API
+
+const pointCloudAttributes = PointCloudLayer.getAttributeManager()
+  .update({
+    data: dataSamples.getPointCloud(),
+    numInstances: dataSamples.getPointCloud().length,
+    props: {
+      data: dataSamples.getPointCloud(),
+      getPosition: d => d.position,
+      getNormal: d => d.normal,
+      getColor: d => d.color
+    }
+  });
 
 const MARKER_SIZE_MAP = {
   small: 200,
@@ -174,69 +192,39 @@ const ScatterplotLayerExample = {
   }
 };
 
-const PointCloudLayerExample = {
-  layer: PointCloudLayer,
-  getData: dataSamples.getPointCloud,
-  props: {
-    id: 'pointCloudLayer',
-    outline: true,
-    projectionMode: 2,
-    positionOrigin: dataSamples.positionOrigin,
-    getPosition: d => get(d, 'position'),
-    getNormal: d => get(d, 'normal'),
-    getColor: d => get(d, 'color'),
-    opacity: 1,
-    radiusPixels: 4,
-    pickable: true
-  }
-};
-
 // Uncomment to test using external buffers
 // const PointCloudLayerExample = {
 //   layer: PointCloudLayer,
+//   getData: dataSamples.getPointCloud,
 //   props: {
 //     id: 'pointCloudLayer',
 //     outline: true,
-//     data: null,
-//     projectionMode: 2,
+//     projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
 //     positionOrigin: dataSamples.positionOrigin,
-//     numInstances: dataSamples.getPointCloud().length,
-//     instancePositions: (data => {
-//       const buffer = new Float32Array(data.length * 3);
-//       let i = 0;
-//       for (const d of data) {
-//         buffer[i++] = d.position[0];
-//         buffer[i++] = d.position[1];
-//         buffer[i++] = d.position[2];
-//       }
-//       return buffer;
-//     })(dataSamples.getPointCloud()),
-//     instanceNormals: (data => {
-//       const buffer = new Float32Array(data.length * 3);
-//       let i = 0;
-//       for (const d of data) {
-//         buffer[i++] = d.normal[0];
-//         buffer[i++] = d.normal[1];
-//         buffer[i++] = d.normal[2];
-//       }
-//       return buffer;
-//     })(dataSamples.getPointCloud()),
-//     instanceColors: (data => {
-//       const buffer = new Uint8ClampedArray(data.length * 4);
-//       let i = 0;
-//       for (const d of data) {
-//         buffer[i++] = d.color[0];
-//         buffer[i++] = d.color[1];
-//         buffer[i++] = d.color[2];
-//         buffer[i++] = 255;
-//       }
-//       return buffer;
-//     })(dataSamples.getPointCloud()),
+//     getPosition: d => get(d, 'position'),
+//     getNormal: d => get(d, 'normal'),
+//     getColor: d => get(d, 'color'),
 //     opacity: 1,
 //     radiusPixels: 4,
 //     pickable: true
 //   }
 // };
+
+const PointCloudLayerExample = {
+  layer: PointCloudLayer,
+  props: {
+    id: 'pointCloudLayer',
+    outline: true,
+    projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
+    positionOrigin: dataSamples.positionOrigin,
+    opacity: 1,
+    radiusPixels: 4,
+    pickable: true,
+
+    // Pregenerated attributes
+    ...pointCloudAttributes.getTypedArrays()
+  }
+};
 
 const GridCellLayerExample = {
   layer: GridCellLayer,
