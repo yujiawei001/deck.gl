@@ -28,8 +28,12 @@ export default class Stats {
       Date.now();
   }
 
-  getTimeString() {
-    return `${this.id}:${formatTime(this.time)}(${this.count})`;
+  getCount() {
+    return this.count;
+  }
+
+  getTime() {
+    return formatTime(this.time);
   }
 }
 

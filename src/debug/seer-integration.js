@@ -98,25 +98,35 @@ export const logPayload = layer => {
     })
   }];
 
-  const badges = [layer.constructor.layerName];
+  const badges = [];
 
   if (layer.state) {
     if (layer.state.attributeManager) {
       const attrs = layer.state.attributeManager.getAttributes();
       data.push({path: 'objects.attributes', data: attrs});
       badges.push({
-        text: layer.state.attributeManager.stats.getTimeString(),
-        hint: 'Attributes timer'
+        text: layer.state.attributeManager.stats.getTime(),
+        hint: 'Attribute regeneration time'
+      });
+
+      badges.push({
+        text: layer.state.attributeManager.stats.getCount(),
+        hint: 'Attribute regeneration count'
       });
     }
     if (layer.state.model) {
       layer.state.model.timerQueryEnabled = true;
       const {lastFrameTime} = layer.state.model.stats;
       if (lastFrameTime) {
-        badges.push({text: `${(lastFrameTime * 1000).toFixed(0)}μs`, hint: 'fps'});
+        badges.push({
+          text: `${(lastFrameTime * 1000).toFixed(0)}μs`,
+          hint: 'Render time'
+        });
       }
     }
   }
+
+  badges.push(layer.constructor.layerName);
 
   data.push({path: 'badges', data: badges});
 
