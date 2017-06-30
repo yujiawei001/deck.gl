@@ -90,9 +90,13 @@ export const removeLayerInSeer = id => {
 };
 
 export const logPayload = layer => {
-  const data = [
-    {path: 'objects.props', data: layer.props}
-  ];
+
+  const data = [{
+    path: 'objects.props',
+    data: Object.assign({}, layer.props, {
+      dataLength: layer.props.data.length
+    })
+  }];
 
   const badges = [layer.constructor.layerName];
 
@@ -100,13 +104,16 @@ export const logPayload = layer => {
     if (layer.state.attributeManager) {
       const attrs = layer.state.attributeManager.getAttributes();
       data.push({path: 'objects.attributes', data: attrs});
-      badges.push(layer.state.attributeManager.stats.getTimeString());
+      badges.push({
+        text: layer.state.attributeManager.stats.getTimeString(),
+        hint: 'Attributes timer'
+      });
     }
     if (layer.state.model) {
       layer.state.model.timerQueryEnabled = true;
       const {lastFrameTime} = layer.state.model.stats;
       if (lastFrameTime) {
-        badges.push(`${(lastFrameTime * 1000).toFixed(0)}μs`);
+        badges.push({text: `${(lastFrameTime * 1000).toFixed(0)}μs`, hint: 'fps'});
       }
     }
   }
